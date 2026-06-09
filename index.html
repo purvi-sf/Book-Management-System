@@ -1,72 +1,74 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>BOOK MANAGEMENT SYSTEM</title>
-  <style>
-    body {
-      font-family: Arial, sans-serif;
-      max-width: 600px;
-      margin: 40px auto;
-      padding: 20px;
-      background-color: #071A2F;
-    }
-    h1 {
-      color: #1E88FF;
-      text-align: center;
-    }
-   
-    label {
-      font-weight: bold;
-      display: block;
-      margin-top: 30px;
-      color: #42A5FF;
-    }
-    input, select {
-      width: 100%;
-      padding: 10px;
-      margin-top: 5px;
-      border: 1px solid #ccc;
-      border-radius: 4px;
-      font-size: 14px;
-      box-sizing: border-box;
-    }
-    button {
-      margin-top: 25px;
-      width: 100%;
-      padding: 12px;
-      background-color: #6495ED;
-      color: white;
-      font-size: 16px;
-      border: none;
-      border-radius: 4px;
-      cursor: pointer;
-    }
-  </style>
+  <title>Book Management System</title>
+  <link rel="stylesheet" href="style.css">
 </head>
+
 <body>
 
-  <h1>BOOK MANAGEMENT SYSTEM</h1>
+  <h1>Book Management System</h1>
 
-  <form>
+  <div class="form-section">
+
+    <h2 id="formHeading">Add a New Book</h2>
+
     <label for="title">Title:</label>
-    <input type="text" id="title" name="title" placeholder="Enter book title e.g. Matilda">
+    <input type="text" id="title" placeholder="Enter book title">
+    <span class="error" id="titleError">Title is required.</span>
 
     <label for="author">Author:</label>
-    <input type="text" id="author" name="author" placeholder="Enter author name e.g. Ruskin Bond">
+    <input type="text" id="author" placeholder="Enter author name">
+    <span class="error" id="authorError">Author is required.</span>
 
     <label for="isbn">ISBN:</label>
-    <input type="text" id="isbn" name="isbn" placeholder="e.g. 978-0-19-853453-1">
+    <input type="text" id="isbn" placeholder="Enter ISBN number">
+    <span class="error" id="isbnError">ISBN must be a valid number.</span>
 
-    <label for="pub_date">Publication Date:</label>
-    <input type="date" id="pub_date" name="pub_date">
+    <label for="publish_date">Publication Date:</label>
+    <input type="date" id="publish_date">
+    <span class="error" id="publish_dateError">Publication date is required.</span>
 
     <label for="genre">Genre:</label>
-    <input type="text" id="genre" name="genre" placeholder="e.g. Romance, Horror, etc">
+    <input type="text" id="genre" placeholder="e.g. Fiction, Fantasy, History">
+    <span class="error" id="genreError">Genre is required.</span>
 
-    <button type="submit">Add Book!</button>
-  </form>
+    <br><br>
 
+    <button id="submitBtn" onclick="submit_book()">Add Book</button>
+    <button id="cancelBtn" onclick="cancelEdit()">Cancel</button>
+
+    <p class="success" id="successMsg">Book added successfully!</p>
+
+  </div>
+
+  <hr>
+  <div class="list-section">
+    <h2>Book List</h2>
+    <p id="noBooks">No books added yet.</p>
+
+    <table id="bookTable">
+      <thead>
+        <tr>
+          <th>Srl No.</th>
+          <th>Title</th>
+          <th>Author</th>
+          <th>ISBN</th>
+          <th>Publication Date</th>
+          <th>Age (years)</th>
+          <th>Genre</th>
+          <th>Era</th>
+          <th>Actions</th>
+        </tr>
+      </thead>
+      <tbody id="bookTableBody">
+      </tbody>
+    </table>
+
+  </div>
+  <script src="script.js"></script>
 </body>
 </html>

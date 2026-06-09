@@ -1,0 +1,168 @@
+body {
+  font-family: Arial, sans-serif;
+  max-width: 800px;
+  margin: 40px auto;
+  padding: 20px;
+  background-color: #071A2F;
+  color: white;
+}
+
+h1 {
+  color: #1E88FF;
+  text-align: center;
+}
+
+h2 {
+  color: #42A5FF;
+  text-align: center;
+  margin-bottom: 20px;
+}
+
+.form-section {
+  background-color: #0D2740;
+  padding: 25px;
+  border-radius: 8px;
+  max-width: 500px;
+  margin: 30px auto;
+  text-align: center;
+}
+
+label {
+  display: block;
+  margin-top: 20px;
+  font-weight: bold;
+  color: #42A5FF;
+  text-align: left;
+}
+
+input, select {
+  width: 100%;
+  padding: 10px;
+  margin-top: 5px;
+  border: 1px solid #1E88FF;
+  border-radius: 4px;
+  font-size: 14px;
+  box-sizing: border-box;
+  background-color: #0A1F35;
+  color: white;
+}
+
+input.invalid {
+  border-color: #FF5252;
+}
+
+.error {
+  color: #FF5252;
+  font-size: 12px;
+  display: none;
+  text-align: left;
+}
+
+.success {
+  color: #64FFDA;
+  font-size: 14px;
+  display: none;
+  margin-top: 10px;
+}
+
+button {
+  margin-top: 20px;
+  width: 100%;
+  padding: 12px;
+  background-color: #1E88FF;
+  color: white;
+  font-size: 16px;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+}
+
+button:hover {
+  background-color: #1565C0;
+}
+
+#cancelBtn {
+  background-color: #37474F;
+  margin-top: 10px;
+  display: none;
+}
+
+#cancelBtn:hover {
+  background-color: #263238;
+}
+
+.list-section {
+  margin-top: 40px;
+}
+
+.list-section h2 {
+  color: #42A5FF;
+}
+
+#noBooks {
+  color: #90CAF9;
+  text-align: center;
+  margin-top: 10px;
+}
+
+table {
+  width: 100%;
+  border-collapse: collapse;
+  background-color: #0D2740;
+  display: none;
+  margin-top: 15px;
+  border-radius: 8px;
+  overflow: hidden;
+}
+
+th {
+  background-color: #1E88FF;
+  color: white;
+  padding: 12px 10px;
+  text-align: left;
+  font-size: 13px;
+}
+
+td {
+  padding: 10px;
+  font-size: 13px;
+  border-bottom: 1px solid #1A3A5C;
+  color: #CFE2FF;
+}
+
+tr:hover td {
+  background-color: #0A2540;
+}
+
+.editBtn {
+  padding: 5px 10px;
+  background-color: #1565C0;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 12px;
+  margin-right: 5px;
+  width: auto;
+  margin-top: 0;
+}
+
+.editBtn:hover {
+  background-color: #0D47A1;
+}
+
+.deleteBtn {
+  padding: 5px 10px;
+  background-color: #B71C1C;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 12px;
+  width: auto;
+  margin-top: 0;
+}
+
+.deleteBtn:hover {
+  background-color: #7F0000;
+}
