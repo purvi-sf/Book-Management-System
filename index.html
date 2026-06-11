@@ -1,19 +1,16 @@
 <!DOCTYPE html>
 <html lang="en">
-
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Book Management System</title>
   <link rel="stylesheet" href="style.css">
 </head>
-
 <body>
 
   <h1>Book Management System</h1>
 
   <div class="form-section">
-
     <h2 id="formHeading">Add a New Book</h2>
 
     <label for="title">Title:</label>
@@ -25,27 +22,75 @@
     <span class="error" id="authorError">Author is required.</span>
 
     <label for="isbn">ISBN:</label>
-    <input type="text" id="isbn" placeholder="Enter ISBN number">
-    <span class="error" id="isbnError">ISBN must be a valid number.</span>
+    <input type="text" id="isbn" placeholder="Enter ISBN number" oninput="only_numbers(this)">
+    <span class="error" id="isbnError">ISBN is required.</span>
 
     <label for="publish_date">Publication Date:</label>
     <input type="date" id="publish_date">
     <span class="error" id="publish_dateError">Publication date is required.</span>
 
     <label for="genre">Genre:</label>
-    <input type="text" id="genre" placeholder="e.g. Fiction, Fantasy, History">
-    <span class="error" id="genreError">Genre is required.</span>
+    <select id="genre">
+      <option value="">-- Select Genre --</option>
+      <option value="Fiction">Fiction</option>
+      <option value="Non-Fiction">Non-Fiction</option>
+      <option value="Fantasy">Fantasy</option>
+      <option value="Science Fiction">Science Fiction</option>
+      <option value="Mystery">Mystery</option>
+      <option value="Thriller">Thriller</option>
+      <option value="Romance">Romance</option>
+      <option value="Horror">Horror</option>
+      <option value="History">History</option>
+      <option value="Science">Science</option>
+      <option value="Biography">Biography</option>
+      <option value="Other">Other</option>
+    </select>
+    <span class="error" id="genreError">Please select a genre.</span>
 
     <br><br>
-
     <button id="submitBtn" onclick="submit_book()">Add Book</button>
     <button id="cancelBtn" onclick="cancelEdit()">Cancel</button>
-
     <p class="success" id="successMsg">Book added successfully!</p>
-
   </div>
 
   <hr>
+
+  <div class="card-section">
+    <h2>Fetch Book from Server</h2>
+    <p class="section-info">Enter a number between 1 and 100 to fetch a sample book from the API.</p>
+
+    <div class="input-row">
+      <input type="number" id="fetchId" placeholder="Enter a number (1-100)" min="1" max="100">
+      <button class="action-btn" onclick="fetch_book_from_api()">Fetch Book</button>
+    </div>
+
+    <p id="loadingMsg" class="loading">Loading...</p>
+    <p id="fetchError" class="error-msg"></p>
+
+    <div id="fetchResult" class="fetch-result">
+      <h3 id="fetchTitle"></h3>
+      <p id="fetchBody"></p>
+      <button class="action-btn" onclick="add_fetched_book()">Add this book to my list</button>
+    </div>
+  </div>
+
+  <hr>
+
+  <div class="card-section">
+    <h2>Search Books</h2>
+    <p class="section-info">Search your book list by title or author.</p>
+
+    <div class="input-row">
+      <input type="text" id="searchInput" placeholder="Search by title or author...">
+      <button class="action-btn" onclick="search_books()">Search</button>
+      <button class="action-btn secondary-btn" onclick="clear_search()">Clear</button>
+    </div>
+
+    <p id="searchStatus" class="section-info"></p>
+  </div>
+
+  <hr>
+
   <div class="list-section">
     <h2>Book List</h2>
     <p id="noBooks">No books added yet.</p>
@@ -64,11 +109,10 @@
           <th>Actions</th>
         </tr>
       </thead>
-      <tbody id="bookTableBody">
-      </tbody>
+      <tbody id="bookTableBody"></tbody>
     </table>
-
   </div>
+
   <script src="script.js"></script>
 </body>
 </html>
