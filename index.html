@@ -4,33 +4,41 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Book Management System</title>
-  <link rel="stylesheet" href="style.css">
+  <script src="https://cdn.tailwindcss.com"></script>
+  <style>
+    @media (max-width: 768px) {
+      #bookTable { display: none !important; }
+      #bookCards { display: flex !important; flex-direction: column; }
+    }
+    input.invalid { border-color: #FF5252 !important; }
+    #bookTable th { background:#1E88FF; color:white; padding:12px; text-align:left; font-size:12px; }
+  </style>
 </head>
-<body>
+<body class="bg-[#071A2F] text-white font-sans max-w-4xl mx-auto p-4 md:p-8">
 
-  <h1>Book Management System</h1>
+  <h1 class="text-[#1E88FF] text-2xl md:text-3xl font-bold text-center mb-8">Book Management System</h1>
 
-  <div class="form-section">
-    <h2 id="formHeading">Add a New Book</h2>
+  <div class="bg-[#0D2740] rounded-lg p-5 md:p-6 max-w-lg mx-auto mb-8">
+    <h2 id="formHeading" class="text-[#42A5FF] text-xl font-bold text-center mb-4">Add a New Book</h2>
 
-    <label for="title">Title:</label>
-    <input type="text" id="title" placeholder="Enter book title">
-    <span class="error" id="titleError">Title is required.</span>
+    <label for="title" class="block text-left font-bold text-[#42A5FF] mt-4 mb-1">Title:</label>
+    <input type="text" id="title" placeholder="Enter book title" class="w-full p-2.5 rounded border border-[#1E88FF] bg-[#0A1F35] text-white text-sm focus:outline-none focus:ring-2 focus:ring-[#1E88FF]">
+    <span class="hidden text-[#FF5252] text-xs text-left block mt-1" id="titleError">Title is required.</span>
 
-    <label for="author">Author:</label>
-    <input type="text" id="author" placeholder="Enter author name">
-    <span class="error" id="authorError">Author is required.</span>
+    <label for="author" class="block text-left font-bold text-[#42A5FF] mt-4 mb-1">Author:</label>
+    <input type="text" id="author" placeholder="Enter author name" class="w-full p-2.5 rounded border border-[#1E88FF] bg-[#0A1F35] text-white text-sm focus:outline-none focus:ring-2 focus:ring-[#1E88FF]">
+    <span class="hidden text-[#FF5252] text-xs text-left block mt-1" id="authorError">Author is required.</span>
 
-    <label for="isbn">ISBN:</label>
-    <input type="text" id="isbn" placeholder="Enter ISBN number" oninput="only_numbers(this)">
-    <span class="error" id="isbnError">ISBN is required.</span>
+    <label for="isbn" class="block text-left font-bold text-[#42A5FF] mt-4 mb-1">ISBN:</label>
+    <input type="text" id="isbn" placeholder="Enter ISBN number" oninput="only_numbers(this)" class="w-full p-2.5 rounded border border-[#1E88FF] bg-[#0A1F35] text-white text-sm focus:outline-none focus:ring-2 focus:ring-[#1E88FF]">
+    <span class="hidden text-[#FF5252] text-xs text-left block mt-1" id="isbnError">ISBN is required.</span>
 
-    <label for="publish_date">Publication Date:</label>
-    <input type="date" id="publish_date">
-    <span class="error" id="publish_dateError">Publication date is required.</span>
+    <label for="publish_date" class="block text-left font-bold text-[#42A5FF] mt-4 mb-1">Publication Date:</label>
+    <input type="date" id="publish_date" class="w-full p-2.5 rounded border border-[#1E88FF] bg-[#0A1F35] text-white text-sm focus:outline-none focus:ring-2 focus:ring-[#1E88FF]">
+    <span class="hidden text-[#FF5252] text-xs text-left block mt-1" id="publish_dateError">Publication date is required.</span>
 
-    <label for="genre">Genre:</label>
-    <select id="genre">
+    <label for="genre" class="block text-left font-bold text-[#42A5FF] mt-4 mb-1">Genre:</label>
+    <select id="genre" class="w-full p-2.5 h-[42px] rounded border border-[#1E88FF] bg-[#0A1F35] text-white text-sm focus:outline-none focus:ring-2 focus:ring-[#1E88FF]">
       <option value="">-- Select Genre --</option>
       <option value="Fiction">Fiction</option>
       <option value="Non-Fiction">Non-Fiction</option>
@@ -45,72 +53,94 @@
       <option value="Biography">Biography</option>
       <option value="Other">Other</option>
     </select>
-    <span class="error" id="genreError">Please select a genre.</span>
+    <span class="hidden text-[#FF5252] text-xs text-left block mt-1" id="genreError">Please select a genre.</span>
 
-    <br><br>
-    <button id="submitBtn" onclick="submit_book()">Add Book</button>
-    <button id="cancelBtn" onclick="cancelEdit()">Cancel</button>
-    <p class="success" id="successMsg">Book added successfully!</p>
+    <button id="submitBtn" onclick="submit_book()" class="w-full mt-5 p-3 rounded bg-[#1E88FF] hover:bg-[#1565C0] text-white font-medium transition-colors">Add Book</button>
+    <button id="cancelBtn" onclick="cancelEdit()" class="hidden w-full mt-2.5 p-3 rounded bg-[#37474F] hover:bg-[#263238] text-white font-medium transition-colors">Cancel</button>
+
+    <p id="successMsg" class="hidden text-[#64FFDA] text-sm mt-2.5">Book added successfully!</p>
   </div>
 
-  <hr>
+  <hr class="border-[#1A3A5C] my-8">
 
-  <div class="card-section">
-    <h2>Fetch Book from Server</h2>
-    <p class="section-info">Enter a number between 1 and 100 to fetch a sample book from the API.</p>
+  <div class="bg-[#0D2740] rounded-lg p-5 md:p-6 mb-8">
+    <h2 class="text-[#42A5FF] text-xl font-bold text-center mb-2">Fetch Book from Server</h2>
+    <p class="text-[#90CAF9] text-sm text-center mb-4">Enter a number between 1 and 100 to fetch a sample book from the API.</p>
 
-    <div class="input-row">
-      <input type="number" id="fetchId" placeholder="Enter a number (1-100)" min="1" max="100">
-      <button class="action-btn" onclick="fetch_book_from_api()">Fetch Book</button>
+    <div class="flex flex-col sm:flex-row gap-2.5 justify-center items-center">
+      <input type="number" id="fetchId" placeholder="Enter a number (1-100)" min="1" max="100" class="w-full sm:flex-1 sm:max-w-[350px] p-2.5 rounded border border-[#1E88FF] bg-[#0A1F35] text-white text-sm focus:outline-none focus:ring-2 focus:ring-[#1E88FF]">
+      <button onclick="fetch_book_from_api()" class="w-full sm:w-auto p-2.5 px-5 rounded bg-[#1E88FF] hover:bg-[#1565C0] text-white text-sm font-medium whitespace-nowrap transition-colors">Fetch Book</button>
     </div>
 
-    <p id="loadingMsg" class="loading">Loading...</p>
-    <p id="fetchError" class="error-msg"></p>
+    <p id="loadingMsg" class="hidden text-[#90CAF9] text-center text-sm mt-2.5">Loading...</p>
+    <p id="fetchError" class="hidden text-[#FF5252] text-center text-sm mt-2.5"></p>
 
-    <div id="fetchResult" class="fetch-result">
-      <h3 id="fetchTitle"></h3>
-      <p id="fetchBody"></p>
-      <button class="action-btn" onclick="add_fetched_book()">Add this book to my list</button>
+    <div id="fetchResult" class="hidden bg-[#0A1F35] border border-[#1E88FF] rounded-lg p-5 mt-4">
+      <h3 id="fetchTitle" class="text-[#42A5FF] font-bold mb-2 capitalize"></h3>
+      <p id="fetchBody" class="text-[#CFE2FF] text-sm mb-4 leading-relaxed"></p>
+      <button onclick="add_fetched_book()" class="w-full p-2.5 rounded bg-[#1E88FF] hover:bg-[#1565C0] text-white text-sm font-medium transition-colors">Add this book to my list</button>
     </div>
   </div>
 
-  <hr>
+  <hr class="border-[#1A3A5C] my-8">
 
-  <div class="card-section">
-    <h2>Search Books</h2>
-    <p class="section-info">Search your book list by title or author.</p>
+  <div class="bg-[#0D2740] rounded-lg p-5 md:p-6 mb-8">
+    <h2 class="text-[#42A5FF] text-xl font-bold text-center mb-2">Search Books</h2>
+    <p class="text-[#90CAF9] text-sm text-center mb-4">Search your book list by title or author.</p>
 
-    <div class="input-row">
-      <input type="text" id="searchInput" placeholder="Search by title or author...">
-      <button class="action-btn" onclick="search_books()">Search</button>
-      <button class="action-btn secondary-btn" onclick="clear_search()">Clear</button>
+    <div class="flex flex-col sm:flex-row gap-2.5 justify-center items-center">
+      <input type="text" id="searchInput" placeholder="Search by title or author..." class="w-full sm:flex-1 sm:max-w-[350px] p-2.5 rounded border border-[#1E88FF] bg-[#0A1F35] text-white text-sm focus:outline-none focus:ring-2 focus:ring-[#1E88FF]">
+      <button onclick="search_books()" class="w-full sm:w-auto p-2.5 px-5 rounded bg-[#1E88FF] hover:bg-[#1565C0] text-white text-sm font-medium whitespace-nowrap transition-colors">Search</button>
+      <button onclick="clear_search()" class="w-full sm:w-auto p-2.5 px-5 rounded bg-[#37474F] hover:bg-[#263238] text-white text-sm font-medium whitespace-nowrap transition-colors">Clear</button>
     </div>
 
-    <p id="searchStatus" class="section-info"></p>
+    <p id="searchStatus" class="text-[#90CAF9] text-sm text-center mt-3"></p>
   </div>
 
-  <hr>
+  <hr class="border-[#1A3A5C] my-8">
 
-  <div class="list-section">
-    <h2>Book List</h2>
-    <p id="noBooks">No books added yet.</p>
+  <div>
+    <h2 class="text-[#42A5FF] text-xl font-bold text-center mb-4">Book List</h2>
 
-    <table id="bookTable">
-      <thead>
-        <tr>
-          <th>Srl No.</th>
-          <th>Title</th>
-          <th>Author</th>
-          <th>ISBN</th>
-          <th>Publication Date</th>
-          <th>Age (years)</th>
-          <th>Genre</th>
-          <th>Era</th>
-          <th>Actions</th>
-        </tr>
-      </thead>
-      <tbody id="bookTableBody"></tbody>
-    </table>
+    <div class="flex flex-col sm:flex-row gap-2.5 justify-center items-center mb-4">
+      <label for="sortSelect" class="font-bold text-[#42A5FF] text-sm">Sort by:</label>
+      <select id="sortSelect" onchange="display_books()" class="w-full sm:w-auto p-2 rounded border border-[#1E88FF] bg-[#0A1F35] text-white text-sm focus:outline-none focus:ring-2 focus:ring-[#1E88FF]">
+        <option value="none">Original Order</option>
+        <option value="title">Title (A-Z)</option>
+        <option value="author">Author (A-Z)</option>
+        <option value="age_desc">Age (Oldest first)</option>
+        <option value="age_asc">Age (Newest first)</option>
+      </select>
+    </div>
+
+    <p id="noBooks" class="text-[#90CAF9] text-center mt-2.5">No books added yet.</p>
+
+  <table id="bookTable" class="hidden md:table w-full border-collapse bg-[#0D2740] mt-4 rounded-lg overflow-hidden">
+    <thead>
+      <tr>
+        <th>Srl No.</th>
+        <th>Title</th>
+        <th>Author</th>
+        <th>ISBN</th>
+        <th>Publication Date</th>
+        <th>Age (years)</th>
+        <th>Genre</th>
+        <th>Era</th>
+        <th>Actions</th>
+      </tr>
+    </thead>
+    <tbody id="bookTableBody"></tbody>
+  </table>
+
+    <div id="bookCards" class="hidden md:hidden flex-col gap-3 mt-4"></div>
+  </div>
+
+  <div id="detailModal" class="hidden fixed inset-0 bg-black/60 flex items-center justify-center p-4 z-50">
+    <div class="bg-[#0D2740] border border-[#1E88FF] rounded-lg p-6 max-w-md w-full">
+      <h3 id="detailTitle" class="text-[#42A5FF] text-xl font-bold mb-3"></h3>
+      <div id="detailBody" class="text-[#CFE2FF] text-sm space-y-2 mb-5"></div>
+      <button onclick="closeDetails()" class="w-full p-2.5 rounded bg-[#1E88FF] hover:bg-[#1565C0] text-white text-sm font-medium transition-colors">Close</button>
+    </div>
   </div>
 
   <script src="script.js"></script>
