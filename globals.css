@@ -1,0 +1,17 @@
+:root {
+  --bg-dark:   #071A2F;
+  --bg-card:   #0D2740;
+  --bg-input:  #0A1F35;
+  --bg-hover:  #0A2540;
+  --blue-main: #1E88FF;
+  --blue-dark: #1565C0;
+  --blue-light:#42A5FF;
+  --blue-muted:#90CAF9;
+  --text-light:#CFE2FF;
+  --red:       #FF5252;
+  --red-dark:  #B71C1C;
+  --green:     #64FFDA;
+  --grey:      #37474F;
+  --grey-dark: #263238;
+  --border:    #1A3A5C;
+}
