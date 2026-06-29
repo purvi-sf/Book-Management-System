@@ -55,8 +55,20 @@
     </select>
     <span class="hidden text-[#FF5252] text-xs text-left block mt-1" id="genreError">Please select a genre.</span>
 
-    <button id="submitBtn" onclick="submit_book()" class="w-full mt-5 p-3 rounded bg-[#1E88FF] hover:bg-[#1565C0] text-white font-medium transition-colors">Add Book</button>
-    <button id="cancelBtn" onclick="cancelEdit()" class="hidden w-full mt-2.5 p-3 rounded bg-[#37474F] hover:bg-[#263238] text-white font-medium transition-colors">Cancel</button>
+    <label for="book_type" class="block text-left font-bold text-[#42A5FF] mt-4 mb-1">Book Type:</label>
+    <select id="book_type" onchange="app.toggle_extra_field()" class="w-full p-2.5 h-[42px] rounded border border-[#1E88FF] bg-[#0A1F35] text-white text-sm focus:outline-none focus:ring-2 focus:ring-[#1E88FF]">
+      <option value="">-- Select Type --</option>
+      <option value="Printed">Printed Book</option>
+      <option value="EBook">EBook</option>
+    </select>
+
+    <div id="extraWrap" class="hidden">
+      <label id="extraLabel" for="extraField" class="block text-left font-bold text-[#42A5FF] mt-4 mb-1">Page Count:</label>
+      <input type="number" id="extraField" placeholder="e.g. 350" class="w-full p-2.5 rounded border border-[#1E88FF] bg-[#0A1F35] text-white text-sm focus:outline-none focus:ring-2 focus:ring-[#1E88FF]">
+    </div>
+
+    <button id="submitBtn" onclick="app.submit_book()" class="w-full mt-5 p-3 rounded bg-[#1E88FF] hover:bg-[#1565C0] text-white font-medium transition-colors">Add Book</button>
+    <button id="cancelBtn" onclick="app.cancelEdit()" class="hidden w-full mt-2.5 p-3 rounded bg-[#37474F] hover:bg-[#263238] text-white font-medium transition-colors">Cancel</button>
 
     <p id="successMsg" class="hidden text-[#64FFDA] text-sm mt-2.5">Book added successfully!</p>
   </div>
@@ -90,8 +102,8 @@
 
     <div class="flex flex-col sm:flex-row gap-2.5 justify-center items-center">
       <input type="text" id="searchInput" placeholder="Search by title or author..." class="w-full sm:flex-1 sm:max-w-[350px] p-2.5 rounded border border-[#1E88FF] bg-[#0A1F35] text-white text-sm focus:outline-none focus:ring-2 focus:ring-[#1E88FF]">
-      <button onclick="search_books()" class="w-full sm:w-auto p-2.5 px-5 rounded bg-[#1E88FF] hover:bg-[#1565C0] text-white text-sm font-medium whitespace-nowrap transition-colors">Search</button>
-      <button onclick="clear_search()" class="w-full sm:w-auto p-2.5 px-5 rounded bg-[#37474F] hover:bg-[#263238] text-white text-sm font-medium whitespace-nowrap transition-colors">Clear</button>
+      <button onclick="app.search_books()" class="w-full sm:w-auto p-2.5 px-5 rounded bg-[#1E88FF] hover:bg-[#1565C0] text-white text-sm font-medium whitespace-nowrap transition-colors">Search</button>
+      <button onclick="app.clear_search()" class="w-full sm:w-auto p-2.5 px-5 rounded bg-[#37474F] hover:bg-[#263238] text-white text-sm font-medium whitespace-nowrap transition-colors">Clear</button>
     </div>
 
     <p id="searchStatus" class="text-[#90CAF9] text-sm text-center mt-3"></p>
@@ -104,33 +116,35 @@
 
     <div class="flex flex-col sm:flex-row gap-2.5 justify-center items-center mb-4">
       <label for="sortSelect" class="font-bold text-[#42A5FF] text-sm">Sort by:</label>
-      <select id="sortSelect" onchange="display_books()" class="w-full sm:w-auto p-2 rounded border border-[#1E88FF] bg-[#0A1F35] text-white text-sm focus:outline-none focus:ring-2 focus:ring-[#1E88FF]">
-        <option value="none">Original Order</option>
+      <select id="sortSelect" onchange="app.display_books()" class="w-full sm:w-auto p-2 rounded border border-[#1E88FF] bg-[#0A1F35] text-white text-sm focus:outline-none focus:ring-2 focus:ring-[#1E88FF]">
+        <option value="none">No sorting</option>
         <option value="title">Title (A-Z)</option>
         <option value="author">Author (A-Z)</option>
-        <option value="age_desc">Age (Oldest first)</option>
         <option value="age_asc">Age (Newest first)</option>
+        <option value="age_desc">Age (Oldest first)</option>
       </select>
     </div>
 
     <p id="noBooks" class="text-[#90CAF9] text-center mt-2.5">No books added yet.</p>
 
-  <table id="bookTable" class="hidden md:table w-full border-collapse bg-[#0D2740] mt-4 rounded-lg overflow-hidden">
-    <thead>
-      <tr>
-        <th>Srl No.</th>
-        <th>Title</th>
-        <th>Author</th>
-        <th>ISBN</th>
-        <th>Publication Date</th>
-        <th>Age (years)</th>
-        <th>Genre</th>
-        <th>Era</th>
-        <th>Actions</th>
-      </tr>
-    </thead>
-    <tbody id="bookTableBody"></tbody>
-  </table>
+    <table id="bookTable" class="hidden md:table w-full border-collapse bg-[#0D2740] mt-4 rounded-lg overflow-hidden">
+      <thead>
+        <tr>
+          <th>Srl No.</th>
+          <th>Title</th>
+          <th>Author</th>
+          <th>ISBN</th>
+          <th>Publication Date</th>
+          <th>Age (years)</th>
+          <th>Genre</th>
+          <th>Era</th>
+          <th>Type</th>
+          <th>Discount</th>
+          <th>Actions</th>
+        </tr>
+      </thead>
+      <tbody id="bookTableBody"></tbody>
+    </table>
 
     <div id="bookCards" class="hidden md:hidden flex-col gap-3 mt-4"></div>
   </div>
@@ -139,7 +153,7 @@
     <div class="bg-[#0D2740] border border-[#1E88FF] rounded-lg p-6 max-w-md w-full">
       <h3 id="detailTitle" class="text-[#42A5FF] text-xl font-bold mb-3"></h3>
       <div id="detailBody" class="text-[#CFE2FF] text-sm space-y-2 mb-5"></div>
-      <button onclick="closeDetails()" class="w-full p-2.5 rounded bg-[#1E88FF] hover:bg-[#1565C0] text-white text-sm font-medium transition-colors">Close</button>
+      <button onclick="app.closeDetails()" class="w-full p-2.5 rounded bg-[#1E88FF] hover:bg-[#1565C0] text-white text-sm font-medium transition-colors">Close</button>
     </div>
   </div>
 
