@@ -18,16 +18,20 @@ export function Log(
   return descriptor;
 }
 
-export function Validate(
-  target: object,
-  key: string,
-  descriptor: PropertyDescriptor
-): PropertyDescriptor {
-  const original = descriptor.value;
+export function ValidateBook(target: object, key: string, descriptor: PropertyDescriptor): PropertyDescriptor {
+  const original = descriptor.value as (...args: unknown[]) => unknown;
   descriptor.value = function (...args: unknown[]): unknown {
-    if (args.some((arg) => arg === null || arg === undefined || arg === "")) 
-      console.warn(`[VALIDATE] ${key} received empty or null argument`);
-    
+    for (const arg of args) {
+      if (arg !== null && arg !== undefined && typeof arg === "object") {
+        const bookObj = arg as Record<string, unknown>;
+        const invalidFields = Object.entries(bookObj)
+          .filter(([, value]) => value === null || value === undefined || value === "")
+          .map(([field]) => field);
+        if (invalidFields.length > 0) {
+          console.warn(`[VALIDATE_BOOK] ${key} — empty fields: ${invalidFields.join(", ")}`);
+        }
+      }
+    }
     return original.apply(this, args);
   };
   return descriptor;

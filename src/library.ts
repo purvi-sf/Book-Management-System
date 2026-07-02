@@ -1,13 +1,13 @@
 import { IBook, ILibrary, SortOption } from "./interfaces.js";
 import { getSortedBooks, filterItems } from "./generics.js";
-import { Log, Validate } from "./decorators.js";
+import { Log, ValidateBook } from "./decorators.js";
 
 export class Library implements ILibrary {
   books: IBook[] = [];
   filteredBooks: IBook[] | null = null;
 
   @Log
-  @Validate
+  @ValidateBook
   addBook(book: IBook): void {
     this.books.push(book);
     this.filteredBooks = null;

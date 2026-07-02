@@ -1,13 +1,13 @@
 {
   "compilerOptions": {
-    "target": "ES2022", //compliles ts to ES2022 JS. 
-    "module": "ES2022", //compiled files contain import/export statements 
+    "target": "ES2022",
+    "module": "ES2022",
     "moduleResolution": "bundler",
-    "strict": false, //
-    "experimentalDecorators": true, //allows log and validate 
+    "strict": true,
+    "experimentalDecorators": true,
     "emitDecoratorMetadata": true,
-    "outDir": "./dist", //compiled js file in dist folder 
-    "rootDir": "./src", //ts files in src 
+    "outDir": "./dist",
+    "rootDir": "./src",
     "sourceMap": true,
     "lib": ["ES2022", "DOM"]
   },

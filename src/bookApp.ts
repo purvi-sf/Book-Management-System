@@ -1,87 +1,99 @@
 import { Library } from "./library.js";
 import { PrintedBook, EBook } from "./books.js";
-import { IBook, IApiBook, IFormValues, SortOption, BookType } from "./interfaces.js";
+import { IBook, IApiBook, IFormValues, SortOption, BookType, Genre} from "./interfaces.js";
 import { Log } from "./decorators.js";
+import { getElement, toSafeGenre } from "./generics.js";
 
 export class BookApp {
-  private library: Library;
   private fieldIds: string[] = ["title", "author", "isbn", "publishDate", "genre"];
   private errorIds: string[] = ["titleError", "authorError", "isbnError", "publishDateError", "genreError"];
   private edit: number | null = null;
 
-  constructor(library: Library) {
-    this.library = library;
+  constructor(private library: Library) {
     this.attachEvents();
   }
 
   private attachEvents(): void {
-    const isbn = document.getElementById("isbn") as HTMLInputElement; //this is used to let TS know that .value exists
-    isbn.addEventListener("input", (e) => { //"input" fires everytime the input value changes in form
-      (e.target as HTMLInputElement).value = (e.target as HTMLInputElement).value.replace(/[^0-9]/g, ""); //replaces every non digit with null
+     getElement<HTMLInputElement>("isbn").addEventListener("input", (e) => { //"input" fires everytime the input value changes in form
+      (e.target as HTMLInputElement).value = (e.target as HTMLInputElement).value.replace(/[^0-9]/g, ""); //replaces every non digit with empty string
     });
 
     const clickEvents: Record<string, () => void> = { //Record<a,b> where a is key and b is value so here key is string and value is function with no return type
-      submitBtn: () => this.submitBook(), //arrow function used to preserve this context
-      cancelBtn: () => this.cancelEdit(),
-      fetchBtn: () => this.fetchBookFromApi(),
-      addFetchedBtn: () => this.addFetchedBook(),
-      searchBtn: () => this.searchBooks(),
-      clearBtn: () => this.clearSearch(),
-      closeDetailBtn: () => this.closeDetails(),
+      submitBtn: this.submitBook, 
+      cancelBtn: this.cancelEdit,
+      fetchBtn: this.fetchBookFromApi,
+      addFetchedBtn: this.addFetchedBook,
+      searchBtn: this.searchBooks,
+      clearBtn: this.clearSearch,
+      closeDetailBtn: this.closeDetails,
     };
 
     const changeEvents: Record<string, () => void> = { 
-      bookType: () => this.toggleExtraField(),
-      sortSelect: () => this.displayBooks(),
+      bookType: this.toggleExtraField,
+      sortSelect: this.displayBooks,
     };
 
     Object.entries(clickEvents).forEach(([id, handler]) => { //converting object to array of pairs 
-      document.getElementById(id)!.addEventListener("click", handler); //for each id fires the click button
+      getElement<HTMLElement>(id).addEventListener("click", handler); //for each id fires the click button
     });
 
     Object.entries(changeEvents).forEach(([id, handler]) => {
-      document.getElementById(id)!.addEventListener("change", handler);
+      getElement<HTMLElement>(id).addEventListener("change", handler);
     });
   }
 
   private getFormValues(): IFormValues {
+    const getValue = (id: string): string => getElement<HTMLInputElement>(id).value.trim();
     return {
-      title: (document.getElementById("title") as HTMLInputElement).value.trim(),
-      author: (document.getElementById("author") as HTMLInputElement).value.trim(),
-      isbn: (document.getElementById("isbn") as HTMLInputElement).value.trim(),
-      publishDate: (document.getElementById("publishDate") as HTMLInputElement).value,
-      genre: (document.getElementById("genre") as HTMLSelectElement).value.trim(),
-      bookType: (document.getElementById("bookType") as HTMLSelectElement).value as BookType | "",
-      extra: (document.getElementById("extraField") as HTMLInputElement).value.trim(),
+      title: getValue("title"),
+      author: getValue("author"),
+      isbn: getValue("isbn"),
+      publishDate: getElement<HTMLInputElement>("publishDate").value,
+      genre: getElement<HTMLSelectElement>("genre").value as Genre | "",
+      bookType: getElement<HTMLSelectElement>("bookType").value as BookType | "",
+      extra: getValue("extraField"),
     };
   }
 
   //for file size and printed page 
-  toggleExtraField(): void {
-    const bookType = (document.getElementById("bookType") as HTMLSelectElement).value;
-    const extraLabel = document.getElementById("extraLabel") as HTMLLabelElement;
-    const extraField = document.getElementById("extraField") as HTMLInputElement;
-    const extraWrap = document.getElementById("extraWrap") as HTMLElement;
-    if (bookType === "Printed") {
-      extraLabel.textContent = "Page Count:";
-      extraField.placeholder = "e.g. 350";
+  toggleExtraField = (): void => {
+    const bookType = getElement<HTMLSelectElement>("bookType").value;
+    const extraLabel = getElement<HTMLLabelElement>("extraLabel");
+    const extraField = getElement<HTMLInputElement>("extraField");
+    const extraWrap = getElement<HTMLElement>("extraWrap");
+
+    const config: Record<string, { label: string; placeholder: string }> = {
+      Printed: { label: "Page Count:", placeholder: "e.g. 350" },
+      EBook: { label: "File Size (MB):", placeholder: "e.g. 5" },
+    };
+ 
+    if (config[bookType]) {
+      extraLabel.textContent = config[bookType].label;
+      extraField.placeholder = config[bookType].placeholder;
       extraWrap.classList.remove("hidden");
-    } else if (bookType === "EBook") {
-      extraLabel.textContent = "File Size (MB):";
-      extraField.placeholder = "e.g. 5";
-      extraWrap.classList.remove("hidden");
-    } else {
+    } 
+    else {
       extraWrap.classList.add("hidden");
       extraField.value = "";
     }
   }
 
+  private validateBookType(): boolean {
+    const bookTypeSelect = getElement<HTMLSelectElement>("bookType");
+    const bookTypeError = getElement<HTMLElement>("bookTypeError");
+    const valid = bookTypeSelect.value !== "";
+    bookTypeError.classList.toggle("hidden", valid);
+    bookTypeSelect.classList.toggle("invalid", !valid);
+    return valid;
+  }
+
   private formCheck(): boolean {
-    const isValid = Library.validateForm(this.fieldIds, this.errorIds);
-    if (!isValid) return false;
-    const isbn = (document.getElementById("isbn") as HTMLInputElement).value.trim();
-    if (this.edit === null && this.library.isbnExists(isbn)) { //duplicate isbn check
-      alert("ISBN already exists"); 
+    const fieldsValid = Library.validateForm(this.fieldIds, this.errorIds);
+    const bookTypeValid = this.validateBookType();
+    if (!fieldsValid || !bookTypeValid) return false;
+    const isbn = getElement<HTMLInputElement>("isbn").value.trim();
+    if (this.edit === null && this.library.isbnExists(isbn)) {
+      alert("ISBN already exists");
       return false;
     }
     return true;
@@ -89,8 +101,9 @@ export class BookApp {
 
   private makeBook(values: IFormValues): IBook {
     const { title, author, isbn, publishDate, genre, bookType, extra } = values;
-    if (bookType === "EBook") return new EBook(title, author, isbn, publishDate, genre, extra || "0");
-    return new PrintedBook(title, author, isbn, publishDate, genre, Number(extra) || 0);
+    const safeGenre = toSafeGenre(genre);
+    if (bookType === "EBook") return new EBook(title, author, isbn, publishDate, safeGenre, extra || "0");
+    return new PrintedBook(title, author, isbn, publishDate, safeGenre, Number(extra) || 0);
   }
 
   @Log
@@ -105,20 +118,27 @@ export class BookApp {
 
   editBook(index: number): void {
     const book = this.library.books[index];
-    for (let i = 0; i < this.fieldIds.length; i++) 
-      (document.getElementById(this.fieldIds[i]) as HTMLInputElement).value = (book as any)[this.fieldIds[i]];
-    (document.getElementById("bookType") as HTMLSelectElement).value = book.type;
+    const bookRecord = book as unknown as Record<string, string>;
+ 
+    for (const id of this.fieldIds) {
+      getElement<HTMLInputElement>(id).value = bookRecord[id] ?? "";
+    }
+ 
+    getElement<HTMLSelectElement>("bookType").value = book.type;
     this.toggleExtraField();
-    if (book.type === "Printed") 
-      (document.getElementById("extraField") as HTMLInputElement).value = String((book as PrintedBook).pageCount);
-    else if (book.type === "EBook")
-      (document.getElementById("extraField") as HTMLInputElement).value = (book as EBook).fileSize;
+ 
+    const extraField = getElement<HTMLInputElement>("extraField");
+    if (book instanceof PrintedBook) 
+        extraField.value = String(book.pageCount);
+    else if (book instanceof EBook) 
+        extraField.value = book.fileSize;
     
+ 
     this.edit = index;
-    document.getElementById("formHeading")!.textContent = "Edit Book";
-    document.getElementById("submitBtn")!.textContent   = "Update Book";
-    document.getElementById("cancelBtn")!.classList.remove("hidden");
-    document.getElementById("successMsg")!.classList.add("hidden");
+    getElement<HTMLElement>("formHeading").textContent = "Edit Book";
+    getElement<HTMLElement>("submitBtn").textContent = "Update Book";
+    getElement<HTMLElement>("cancelBtn").classList.remove("hidden");
+    getElement<HTMLElement>("successMsg").classList.add("hidden");
     window.scrollTo({ top: 0, behavior: "smooth" });
   }
 
@@ -132,34 +152,36 @@ export class BookApp {
     this.displayBooks();
   }
 
-  deleteBook(index: number): void {
+  deleteBook = (index: number): void => {
     if (!confirm("Are you sure you want to delete this book?")) return;
     this.library.deleteBook(index);
     this.displayBooks();
-  }
+  };
 
-  submitBook(): void {
+  submitBook = (): void => {
     if (!this.formCheck()) return;
     if (this.edit !== null) this.updateBook();
     else this.addBook();
   }
 
-  cancelEdit(): void {
+  cancelEdit = (): void => {
     this.edit = null;
     this.clearForm();
-    document.getElementById("formHeading")!.textContent = "Add a New Book";
-    document.getElementById("submitBtn")!.textContent   = "Add Book";
-    document.getElementById("cancelBtn")!.classList.add("hidden");
+    getElement<HTMLElement>("formHeading").textContent = "Add a New Book";
+    getElement<HTMLElement>("submitBtn").textContent = "Add Book";
+    getElement<HTMLElement>("cancelBtn").classList.add("hidden");
   }
 
   private clearForm(): void {
     const toClear = [...this.fieldIds, "bookType", "extraField"];
     toClear.forEach(id => (document.getElementById(id) as HTMLInputElement).value = "");
-    document.getElementById("extraWrap")!.classList.add("hidden");
+    getElement<HTMLElement>("extraWrap").classList.add("hidden");
+    getElement<HTMLElement>("bookTypeError").classList.add("hidden");
+    getElement<HTMLSelectElement>("bookType").classList.remove("invalid");
   }
 
   private showSuccess(message: string): void {
-    const msg = document.getElementById("successMsg") as HTMLElement;
+    const msg = getElement<HTMLElement>("successMsg");
     msg.textContent = message;
     msg.classList.remove("hidden");
   }
@@ -177,39 +199,32 @@ export class BookApp {
 
   showDetails(realIndex: number): void {
     const book = this.library.books[realIndex];
-    const age = book.calculateAge();
-    const era = book.getEra();
-    const discount = book.getDiscount();
-    const summary = book.getSummary();
+    getElement<HTMLElement>("detailTitle").textContent = book.title;
 
-    document.getElementById("detailTitle")!.textContent = book.title;
-
-    const detailBody = document.getElementById("detailBody") as HTMLElement;
+    const detailBody = getElement<HTMLElement>("detailBody");
     detailBody.innerHTML = "";
 
     const rows: [string, string][] = [
-      ["Summary", summary],
+      ["Summary", book.getSummary()],
       ["Author", book.author],
       ["ISBN", book.isbn],
       ["Published", book.publishDate],
-      ["Age", age + " years"],
+      ["Age", book.calculateAge() + " years"],
       ["Genre", book.genre],
-      ["Era", era],
-      ["Discount", discount + "%"],
+      ["Era", book.getEra()],
+      ["Discount", book.getDiscount() + "%"],
       ["Type", book.type],
+      ["Info", book.getExtraInfo()]
     ];
 
-    rows.forEach(([label, value]) => detailBody.appendChild(this.createRow(label, value)));
-
-    if (book.type === "Printed")
-      detailBody.appendChild(this.createRow("Reading Time", (book as PrintedBook).getReadingTime()));
-    else if (book.type === "EBook") 
-      detailBody.appendChild(this.createRow("File Size", (book as EBook).getFileInfo()));
-    document.getElementById("detailModal")!.classList.remove("hidden");
+    rows.forEach(([label, value]) => {
+      detailBody.appendChild(this.createRow(label, value));
+    });
+    getElement<HTMLElement>("detailModal").classList.remove("hidden");
   }
 
-  closeDetails(): void {
-    document.getElementById("detailModal")!.classList.add("hidden");
+  closeDetails = (): void => {
+    getElement<HTMLElement>("detailModal").classList.add("hidden");
   }
 
   private createTd(text: string): HTMLElement {
@@ -241,11 +256,26 @@ export class BookApp {
     return row;
   }
 
-  displayBooks(): void {
-    const tableBody = document.getElementById("bookTableBody") as HTMLElement;
-    const cardBox = document.getElementById("bookCards") as HTMLElement;
-    const noBooks = document.getElementById("noBooks") as HTMLElement;
-    const sortBy = (document.getElementById("sortSelect") as HTMLSelectElement).value as SortOption;
+  private createDiscountBadge(discount: number): HTMLElement {
+    const span = document.createElement("span");
+    span.className = "bg-green-900 text-green-300 text-xs px-2 py-0.5 rounded whitespace-nowrap";
+    span.textContent = discount + "% off";
+    return span;
+  }
+
+  private createCardBtn(text: string, bg: string, onClick: () => void): HTMLElement {
+    const btn = document.createElement("button");
+    btn.textContent = text;
+    btn.className = `flex-1 py-2 rounded text-white text-xs cursor-pointer border-none ${bg}`;
+    btn.addEventListener("click", onClick);
+    return btn;
+  }
+
+  displayBooks = (): void => {
+    const tableBody = getElement<HTMLElement>("bookTableBody");
+    const cardBox = getElement<HTMLElement>("bookCards");
+    const noBooks = getElement<HTMLElement>("noBooks");
+    const sortBy = getElement<HTMLSelectElement>("sortSelect").value as SortOption;
     const booksToShow = this.library.getSortedBooks(sortBy);
 
     if (booksToShow.length === 0) {
@@ -268,28 +298,31 @@ export class BookApp {
       const discount = book.getDiscount();
       const realIndex = this.library.books.indexOf(book);
 
+      const bookData: [string, string][] = [
+        ["Author", book.author],
+        ["ISBN", book.isbn],
+        ["Published", book.publishDate],
+        ["Age", age + " yrs"],
+        ["Genre", book.genre],
+        ["Era", category],
+        ["Type", book.type],
+      ];
+
       const tr = document.createElement("tr");
       tr.className = "border-b border-[var(--border)] hover:bg-[var(--bg-hover)]";
-
-      tr.appendChild(this.createTd(String(i + 1)));
-      tr.appendChild(this.createTd(book.title));
-      tr.appendChild(this.createTd(book.author));
-      tr.appendChild(this.createTd(book.isbn));
-      tr.appendChild(this.createTd(book.publishDate));
-      tr.appendChild(this.createTd(age + " yrs"));
-      tr.appendChild(this.createTd(book.genre));
-      tr.appendChild(this.createTd(category));
-      tr.appendChild(this.createTd(book.type));
-
+ 
+      [String(i + 1), book.title, ...bookData.map(([, value]) => value)].forEach((cell) => {
+        tr.appendChild(this.createTd(cell));
+      });
+ 
       const discountTd = document.createElement("td");
       discountTd.className = "p-2.5 text-[var(--text-light)] text-xs";
-      if (discount > 0) {
-        const badge = document.createElement("span");
-        badge.className = "bg-green-900 text-green-300 text-xs px-2 py-0.5 rounded whitespace-nowrap";
-        badge.textContent = discount + "% off";
-        discountTd.appendChild(badge);
-      } else
+
+      if (discount > 0)
+        discountTd.appendChild(this.createDiscountBadge(discount));
+      else 
         discountTd.textContent = "—";
+      
 
       tr.appendChild(discountTd);
 
@@ -303,20 +336,16 @@ export class BookApp {
 
       const card = document.createElement("div");
       card.className = "bg-[var(--bg-card)] border border-[var(--border)] rounded-lg p-4";
-
+ 
       const cardTitle = document.createElement("h3");
       cardTitle.className = "text-[var(--blue-light)] text-base font-bold mb-3 pb-2 border-b-2 border-[var(--blue-main)]";
       cardTitle.textContent = book.title;
       card.appendChild(cardTitle);
-
-      card.appendChild(this.createCardRow("Author", book.author));
-      card.appendChild(this.createCardRow("ISBN", book.isbn));
-      card.appendChild(this.createCardRow("Published", book.publishDate));
-      card.appendChild(this.createCardRow("Age", age + " yrs"));
-      card.appendChild(this.createCardRow("Genre", book.genre));
-      card.appendChild(this.createCardRow("Era", category));
-      card.appendChild(this.createCardRow("Type", book.type));
-
+ 
+      bookData.slice(1).forEach(([label, value]) => {
+        card.appendChild(this.createCardRow(label, value));
+      });
+ 
       const discountRow = document.createElement("div");
       discountRow.className = "flex justify-between py-2 mb-3";
       const discountLabel = document.createElement("span");
@@ -324,13 +353,10 @@ export class BookApp {
       discountLabel.textContent = "Discount";
       const discountVal = document.createElement("span");
       discountVal.className = "text-[var(--text-light)] text-xs";
-      if (discount > 0) {
-        const badge = document.createElement("span");
-        badge.className = "bg-green-900 text-green-300 text-xs px-2 py-0.5 rounded whitespace-nowrap";
-        badge.textContent = discount + "% off";
-        discountVal.appendChild(badge);
-      } 
-      else
+
+      if (discount > 0) 
+        discountVal.appendChild(this.createDiscountBadge(discount));
+      else 
         discountVal.textContent = "—";
       
       discountRow.appendChild(discountLabel);
@@ -339,26 +365,18 @@ export class BookApp {
 
       const cardActions = document.createElement("div");
       cardActions.className = "flex gap-2";
-
-      const createCardBtn = (text: string, bg: string, onClick: () => void): HTMLElement => {
-        const btn = document.createElement("button");
-        btn.textContent = text;
-        btn.className = `flex-1 py-2 rounded text-white text-xs cursor-pointer border-none ${bg}`;
-        btn.addEventListener("click", onClick);
-        return btn;
-      };
-
-      cardActions.appendChild(createCardBtn("View", "bg-[var(--grey)]", () => this.showDetails(realIndex)));
-      cardActions.appendChild(createCardBtn("Edit", "bg-[var(--blue-dark)]", () => this.editBook(realIndex)));
-      cardActions.appendChild(createCardBtn("Delete", "bg-[var(--red-dark)]", () => this.deleteBook(realIndex)));
+ 
+      cardActions.appendChild(this.createCardBtn("View", "bg-[var(--grey)]", () => { this.showDetails(realIndex); }));
+      cardActions.appendChild(this.createCardBtn("Edit", "bg-[var(--blue-dark)]", () => { this.editBook(realIndex); }));
+      cardActions.appendChild(this.createCardBtn("Delete", "bg-[var(--red-dark)]", () => { this.deleteBook(realIndex); }));
       card.appendChild(cardActions);
       cardBox.appendChild(card);
     }
   }
 
-  searchBooks(): void {
-    const searchTerm = (document.getElementById("searchInput") as HTMLInputElement).value.trim().toLowerCase();
-    const searchStatus = document.getElementById("searchStatus") as HTMLElement;
+  searchBooks = (): void => {
+    const searchTerm = getElement<HTMLInputElement>("searchInput").value.trim().toLowerCase();
+    const searchStatus = getElement<HTMLElement>("searchStatus");
     if (searchTerm === "") {
       searchStatus.textContent = "Please type something to search.";
       return;
@@ -368,79 +386,81 @@ export class BookApp {
     this.displayBooks();
   }
 
-  clearSearch(): void {
+  clearSearch = (): void => {
     this.library.clearSearch();
-    (document.getElementById("searchInput") as HTMLInputElement).value = "";
-    document.getElementById("searchStatus")!.textContent = "";
+    getElement<HTMLInputElement>("searchInput").value = "";
+    getElement<HTMLElement>("searchStatus").textContent = "";
     this.displayBooks();
   }
 
-  private simulateServer(data: unknown): Promise<unknown> {
-    return new Promise((resolve, reject) => {
-      setTimeout(() => {
-        if (data) resolve(data);
-        else reject("No data found");
-      }, 1500);
-    });
+  private showFetchError(fetchError: HTMLElement, loadingMsg: HTMLElement, message: string): void {
+    loadingMsg.classList.add("hidden");
+    fetchError.textContent = message;
+    fetchError.classList.remove("hidden");
   }
 
-  async fetchBookFromApi(): Promise<void> {
-    const id = (document.getElementById("fetchId") as HTMLInputElement).value;
-    const loadingMsg = document.getElementById("loadingMsg") as HTMLElement;
-    const fetchError = document.getElementById("fetchError") as HTMLElement;
-    const fetchResult = document.getElementById("fetchResult") as HTMLElement;
-
+  fetchBookFromApi = async (): Promise<void> => {
+    const id = getElement<HTMLInputElement>("fetchId").value;
+    const loadingMsg = getElement<HTMLElement>("loadingMsg");
+    const fetchError = getElement<HTMLElement>("fetchError");
+    const fetchResult = getElement<HTMLElement>("fetchResult");
+ 
     if (id === "" || Number(id) < 1 || Number(id) > 100) {
-      fetchError.textContent = "Please enter a number between 1 and 100.";
-      fetchError.classList.remove("hidden");
-      fetchResult.classList.add("hidden");
+      this.showFetchError(fetchError, loadingMsg, "Please enter a number between 1 and 100.");
       return;
     }
-
+ 
     fetchError.classList.add("hidden");
     fetchResult.classList.add("hidden");
     loadingMsg.classList.remove("hidden");
-
+ 
     try {
       const response = await fetch("https://6a33db358248ee962fa48cc7.mockapi.io/books/books");
       if (!response.ok) throw new Error(`Server error: ${response.status}`);
-      await this.simulateServer(response);
       const allBooks: IApiBook[] = await response.json();
       const data = allBooks[Number(id) - 1];
       if (!data) throw new Error("Book not found");
-
+ 
       if (this.library.isbnExists(data.isbn)) {
-        loadingMsg.classList.add("hidden");
-        fetchError.textContent = "This book already exists in your list.";
-        fetchError.classList.remove("hidden");
+        this.showFetchError(fetchError, loadingMsg, "This book already exists in your list.");
         return;
       }
-
+ 
       loadingMsg.classList.add("hidden");
       fetchResult.classList.remove("hidden");
-      document.getElementById("fetchTitle")!.textContent = data.title;
-      document.getElementById("fetchBody")!.textContent  = `Author: ${data.author} | Genre: ${data.genre} | Published: ${data.publish_date}`;
-
-      this.fieldIds.forEach(field => {
+      const fetchedType = data.bookType ?? "EBook";
+      getElement<HTMLElement>("fetchTitle").textContent = data.title;
+      getElement<HTMLElement>("fetchBody").textContent = `Author: ${data.author} | Genre: ${data.genre} | Published: ${data.publish_date} | Type: ${fetchedType}`;
+ 
+      this.fieldIds.forEach((field) => {
         const apiField = field === "publishDate" ? "publish_date" : field;
-        fetchResult.dataset[field] = (data as any)[apiField];
+        fetchResult.dataset[field] = (data as unknown as Record<string, string>)[apiField] ?? "";
       });
-
+      fetchResult.dataset["bookType"] = fetchedType;
+      fetchResult.dataset["fileSize"] = data.fileSize ?? "0";
+      fetchResult.dataset["pageCount"] = String(data.pageCount ?? 0);
+ 
     } catch (error) {
-      loadingMsg.classList.add("hidden");
-      fetchError.textContent = `Failed to fetch: ${(error as Error).message}`;
-      fetchError.classList.remove("hidden");
+      this.showFetchError(fetchError, loadingMsg, `Failed to fetch: ${(error as Error).message}`);
     }
   }
 
-  addFetchedBook(): void {
-    const fetchResult = document.getElementById("fetchResult") as HTMLElement;
-    const values = this.fieldIds.map(field => fetchResult.dataset[field] ?? "");
-    const newBook = new EBook(values[0], values[1], values[2], values[3], values[4], "5");
+  addFetchedBook = (): void => {
+    const fetchResult = getElement<HTMLElement>("fetchResult");
+    const values = this.fieldIds.map((field) => fetchResult.dataset[field] ?? "");
+    const bookType = (fetchResult.dataset["bookType"] ?? "EBook") as BookType;
+    const fileSize = fetchResult.dataset["fileSize"] ?? "0";
+    const pageCount = Number(fetchResult.dataset["pageCount"] ?? 0);
+    const safeGenre = toSafeGenre(values[4]);
+ 
+    const newBook: IBook = bookType === "Printed"
+      ? new PrintedBook(values[0], values[1], values[2], values[3], safeGenre, pageCount)
+      : new EBook(values[0], values[1], values[2], values[3], safeGenre, fileSize);
+ 
     this.library.addBook(newBook);
     fetchResult.classList.add("hidden");
-    (document.getElementById("fetchId") as HTMLInputElement).value = "";
-    this.showSuccess("Fetched book added to your list!");
+    getElement<HTMLInputElement>("fetchId").value = "";
+    this.showSuccess(`${bookType} added to your list!`);
     this.displayBooks();
-  }
+  };
 }

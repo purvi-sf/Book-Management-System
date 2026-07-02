@@ -1,6 +1,7 @@
 //type is the keyword which creates a named type in ts
 export type BookType = "Printed" | "EBook";
 export type SortOption = "none" | "title" | "author" | "age_asc" | "age_desc";
+export type Genre = "Fiction" | "Non-Fiction" | "Fantasy" | "Science Fiction" | "Mystery" | "Thriller" | "Romance" | "Horror" | "History" | "Science" | "Biography" | "Other";
 
 //for a general book, all these parameters are common
 export interface IBook {
@@ -8,12 +9,13 @@ export interface IBook {
   author: string;
   isbn: string;
   publishDate: string;
-  genre: string;
+  genre: Genre;
   type: BookType;
   calculateAge(): number;
   getEra(): string;
   getDiscount(): number;
   getSummary(): string;
+  getExtraInfo(): string;
 }
 
 export interface IPrintedBook extends IBook {
@@ -47,6 +49,9 @@ export interface IApiBook {
   isbn: string;
   publish_date: string;
   genre: string;
+  bookType: BookType;
+  fileSize: string;
+  pageCount: number;
 }
 
 //describes object returned by getFormValues()
@@ -55,7 +60,7 @@ export interface IFormValues {
   author: string;
   isbn: string;
   publishDate: string;
-  genre: string;
+  genre: Genre | "";
   bookType: BookType | "";
   extra: string; //dynamic data field for file size and page count
 }
