@@ -1,6 +1,5 @@
-export function findItem(array, predicate) {
-    return array.find(predicate);
-}
+//point of generics is to create functions that work with any type
+//T is just an arbitrary parameter like it could by anything 
 export function filterItems(array, predicate) {
     return array.filter(predicate);
 }
@@ -19,5 +18,15 @@ export function getSortedBooks(books, sortBy) {
         return sortItems(sorted, (a, b) => b.calculateAge() - a.calculateAge());
     else
         return sorted;
+}
+export function getElement(id) {
+    const el = document.getElementById(id);
+    if (!el)
+        throw new Error(`Element with id "${id}" not found`);
+    return el;
+}
+const VALID_GENRES = ["Fiction", "Non-Fiction", "Fantasy", "Science Fiction", "Mystery", "Thriller", "Romance", "Horror", "History", "Science", "Biography", "Other"];
+export function toSafeGenre(value) {
+    return VALID_GENRES.includes(value) ? value : "Other";
 }
 //# sourceMappingURL=generics.js.map

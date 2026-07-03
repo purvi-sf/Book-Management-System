@@ -10,6 +10,7 @@ var __metadata = (this && this.__metadata) || function (k, v) {
 import { Library } from "./library.js";
 import { PrintedBook, EBook } from "./books.js";
 import { Log } from "./decorators.js";
+import { getElement, toSafeGenre } from "./generics.js";
 export class BookApp {
     library;
     fieldIds = ["title", "author", "isbn", "publishDate", "genre"];
@@ -20,66 +21,75 @@ export class BookApp {
         this.attachEvents();
     }
     attachEvents() {
-        const isbn = document.getElementById("isbn");
-        isbn.addEventListener("input", (e) => {
-            e.target.value = e.target.value.replace(/[^0-9]/g, "");
+        getElement("isbn").addEventListener("input", (e) => {
+            e.target.value = e.target.value.replace(/[^0-9]/g, ""); //replaces every non digit with empty string
         });
         const clickEvents = {
-            submitBtn: () => this.submitBook(),
-            cancelBtn: () => this.cancelEdit(),
-            fetchBtn: () => this.fetchBookFromApi(),
-            addFetchedBtn: () => this.addFetchedBook(),
-            searchBtn: () => this.searchBooks(),
-            clearBtn: () => this.clearSearch(),
-            closeDetailBtn: () => this.closeDetails(),
+            submitBtn: this.submitBook,
+            cancelBtn: this.cancelEdit,
+            fetchBtn: this.fetchBookFromApi,
+            addFetchedBtn: this.addFetchedBook,
+            searchBtn: this.searchBooks,
+            clearBtn: this.clearSearch,
+            closeDetailBtn: this.closeDetails,
         };
         const changeEvents = {
-            bookType: () => this.toggleExtraField(),
-            sortSelect: () => this.displayBooks(),
+            bookType: this.toggleExtraField,
+            sortSelect: this.displayBooks,
         };
         Object.entries(clickEvents).forEach(([id, handler]) => {
-            document.getElementById(id).addEventListener("click", handler);
+            getElement(id).addEventListener("click", handler); //for each id fires the click button
         });
         Object.entries(changeEvents).forEach(([id, handler]) => {
-            document.getElementById(id).addEventListener("change", handler);
+            getElement(id).addEventListener("change", handler);
         });
     }
     getFormValues() {
+        const getValue = (id) => getElement(id).value.trim();
         return {
-            title: document.getElementById("title").value.trim(),
-            author: document.getElementById("author").value.trim(),
-            isbn: document.getElementById("isbn").value.trim(),
-            publishDate: document.getElementById("publishDate").value,
-            genre: document.getElementById("genre").value.trim(),
-            bookType: document.getElementById("bookType").value,
-            extra: document.getElementById("extraField").value.trim(),
+            title: getValue("title"),
+            author: getValue("author"),
+            isbn: getValue("isbn"),
+            publishDate: getElement("publishDate").value,
+            genre: getElement("genre").value,
+            bookType: getElement("bookType").value,
+            extra: getValue("extraField"),
         };
     }
-    toggleExtraField() {
-        const bookType = document.getElementById("bookType").value;
-        const extraLabel = document.getElementById("extraLabel");
-        const extraField = document.getElementById("extraField");
-        const extraWrap = document.getElementById("extraWrap");
-        if (bookType === "Printed") {
-            extraLabel.textContent = "Page Count:";
-            extraField.placeholder = "e.g. 350";
-            extraWrap.classList.remove("hidden");
-        }
-        else if (bookType === "EBook") {
-            extraLabel.textContent = "File Size (MB):";
-            extraField.placeholder = "e.g. 5";
+    //for file size and printed page 
+    toggleExtraField = () => {
+        const bookType = getElement("bookType").value;
+        const extraLabel = getElement("extraLabel");
+        const extraField = getElement("extraField");
+        const extraWrap = getElement("extraWrap");
+        const config = {
+            Printed: { label: "Page Count:", placeholder: "e.g. 350" },
+            EBook: { label: "File Size (MB):", placeholder: "e.g. 5" },
+        };
+        if (config[bookType]) {
+            extraLabel.textContent = config[bookType].label;
+            extraField.placeholder = config[bookType].placeholder;
             extraWrap.classList.remove("hidden");
         }
         else {
             extraWrap.classList.add("hidden");
             extraField.value = "";
         }
+    };
+    validateBookType() {
+        const bookTypeSelect = getElement("bookType");
+        const bookTypeError = getElement("bookTypeError");
+        const valid = bookTypeSelect.value !== "";
+        bookTypeError.classList.toggle("hidden", valid);
+        bookTypeSelect.classList.toggle("invalid", !valid);
+        return valid;
     }
     formCheck() {
-        const isValid = Library.validateForm(this.fieldIds, this.errorIds);
-        if (!isValid)
+        const fieldsValid = Library.validateForm(this.fieldIds, this.errorIds);
+        const bookTypeValid = this.validateBookType();
+        if (!fieldsValid || !bookTypeValid)
             return false;
-        const isbn = document.getElementById("isbn").value.trim();
+        const isbn = getElement("isbn").value.trim();
         if (this.edit === null && this.library.isbnExists(isbn)) {
             alert("ISBN already exists");
             return false;
@@ -88,9 +98,10 @@ export class BookApp {
     }
     makeBook(values) {
         const { title, author, isbn, publishDate, genre, bookType, extra } = values;
+        const safeGenre = toSafeGenre(genre);
         if (bookType === "EBook")
-            return new EBook(title, author, isbn, publishDate, genre, extra || "0");
-        return new PrintedBook(title, author, isbn, publishDate, genre, Number(extra) || 0);
+            return new EBook(title, author, isbn, publishDate, safeGenre, extra || "0");
+        return new PrintedBook(title, author, isbn, publishDate, safeGenre, Number(extra) || 0);
     }
     addBook() {
         const values = this.getFormValues();
@@ -102,22 +113,22 @@ export class BookApp {
     }
     editBook(index) {
         const book = this.library.books[index];
-        for (let i = 0; i < this.fieldIds.length; i++) {
-            document.getElementById(this.fieldIds[i]).value = book[this.fieldIds[i]];
+        const bookRecord = book;
+        for (const id of this.fieldIds) {
+            getElement(id).value = bookRecord[id] ?? "";
         }
-        document.getElementById("bookType").value = book.type;
+        getElement("bookType").value = book.type;
         this.toggleExtraField();
-        if (book.type === "Printed") {
-            document.getElementById("extraField").value = String(book.pageCount);
-        }
-        else if (book.type === "EBook") {
-            document.getElementById("extraField").value = book.fileSize;
-        }
+        const extraField = getElement("extraField");
+        if (book instanceof PrintedBook)
+            extraField.value = String(book.pageCount);
+        else if (book instanceof EBook)
+            extraField.value = book.fileSize;
         this.edit = index;
-        document.getElementById("formHeading").textContent = "Edit Book";
-        document.getElementById("submitBtn").textContent = "Update Book";
-        document.getElementById("cancelBtn").classList.remove("hidden");
-        document.getElementById("successMsg").classList.add("hidden");
+        getElement("formHeading").textContent = "Edit Book";
+        getElement("submitBtn").textContent = "Update Book";
+        getElement("cancelBtn").classList.remove("hidden");
+        getElement("successMsg").classList.add("hidden");
         window.scrollTo({ top: 0, behavior: "smooth" });
     }
     updateBook() {
@@ -128,34 +139,36 @@ export class BookApp {
         this.cancelEdit();
         this.displayBooks();
     }
-    deleteBook(index) {
+    deleteBook = (index) => {
         if (!confirm("Are you sure you want to delete this book?"))
             return;
         this.library.deleteBook(index);
         this.displayBooks();
-    }
-    submitBook() {
+    };
+    submitBook = () => {
         if (!this.formCheck())
             return;
         if (this.edit !== null)
             this.updateBook();
         else
             this.addBook();
-    }
-    cancelEdit() {
+    };
+    cancelEdit = () => {
         this.edit = null;
         this.clearForm();
-        document.getElementById("formHeading").textContent = "Add a New Book";
-        document.getElementById("submitBtn").textContent = "Add Book";
-        document.getElementById("cancelBtn").classList.add("hidden");
-    }
+        getElement("formHeading").textContent = "Add a New Book";
+        getElement("submitBtn").textContent = "Add Book";
+        getElement("cancelBtn").classList.add("hidden");
+    };
     clearForm() {
         const toClear = [...this.fieldIds, "bookType", "extraField"];
         toClear.forEach(id => document.getElementById(id).value = "");
-        document.getElementById("extraWrap").classList.add("hidden");
+        getElement("extraWrap").classList.add("hidden");
+        getElement("bookTypeError").classList.add("hidden");
+        getElement("bookType").classList.remove("invalid");
     }
     showSuccess(message) {
-        const msg = document.getElementById("successMsg");
+        const msg = getElement("successMsg");
         msg.textContent = message;
         msg.classList.remove("hidden");
     }
@@ -171,36 +184,29 @@ export class BookApp {
     }
     showDetails(realIndex) {
         const book = this.library.books[realIndex];
-        const age = book.calculateAge();
-        const era = book.getEra();
-        const discount = book.getDiscount();
-        const summary = book.getSummary();
-        document.getElementById("detailTitle").textContent = book.title;
-        const detailBody = document.getElementById("detailBody");
+        getElement("detailTitle").textContent = book.title;
+        const detailBody = getElement("detailBody");
         detailBody.innerHTML = "";
         const rows = [
-            ["Summary", summary],
+            ["Summary", book.getSummary()],
             ["Author", book.author],
             ["ISBN", book.isbn],
             ["Published", book.publishDate],
-            ["Age", age + " years"],
+            ["Age", book.calculateAge() + " years"],
             ["Genre", book.genre],
-            ["Era", era],
-            ["Discount", discount + "%"],
+            ["Era", book.getEra()],
+            ["Discount", book.getDiscount() + "%"],
             ["Type", book.type],
+            ["Info", book.getExtraInfo()]
         ];
-        rows.forEach(([label, value]) => detailBody.appendChild(this.createRow(label, value)));
-        if (book.type === "Printed") {
-            detailBody.appendChild(this.createRow("Reading Time", book.getReadingTime()));
-        }
-        else if (book.type === "EBook") {
-            detailBody.appendChild(this.createRow("File Size", book.getFileInfo()));
-        }
-        document.getElementById("detailModal").classList.remove("hidden");
+        rows.forEach(([label, value]) => {
+            detailBody.appendChild(this.createRow(label, value));
+        });
+        getElement("detailModal").classList.remove("hidden");
     }
-    closeDetails() {
-        document.getElementById("detailModal").classList.add("hidden");
-    }
+    closeDetails = () => {
+        getElement("detailModal").classList.add("hidden");
+    };
     createTd(text) {
         const td = document.createElement("td");
         td.className = "p-2.5 text-[var(--text-light)] text-xs";
@@ -227,11 +233,24 @@ export class BookApp {
         row.appendChild(val);
         return row;
     }
-    displayBooks() {
-        const tableBody = document.getElementById("bookTableBody");
-        const cardBox = document.getElementById("bookCards");
-        const noBooks = document.getElementById("noBooks");
-        const sortBy = document.getElementById("sortSelect").value;
+    createDiscountBadge(discount) {
+        const span = document.createElement("span");
+        span.className = "bg-green-900 text-green-300 text-xs px-2 py-0.5 rounded whitespace-nowrap";
+        span.textContent = discount + "% off";
+        return span;
+    }
+    createCardBtn(text, bg, onClick) {
+        const btn = document.createElement("button");
+        btn.textContent = text;
+        btn.className = `flex-1 py-2 rounded text-white text-xs cursor-pointer border-none ${bg}`;
+        btn.addEventListener("click", onClick);
+        return btn;
+    }
+    displayBooks = () => {
+        const tableBody = getElement("bookTableBody");
+        const cardBox = getElement("bookCards");
+        const noBooks = getElement("noBooks");
+        const sortBy = getElement("sortSelect").value;
         const booksToShow = this.library.getSortedBooks(sortBy);
         if (booksToShow.length === 0) {
             cardBox.classList.add("hidden");
@@ -261,18 +280,15 @@ export class BookApp {
             ];
             const tr = document.createElement("tr");
             tr.className = "border-b border-[var(--border)] hover:bg-[var(--bg-hover)]";
-            [String(i + 1), book.title, ...bookData.map(([, value]) => value)].forEach(cell => tr.appendChild(this.createTd(cell)));
+            [String(i + 1), book.title, ...bookData.map(([, value]) => value)].forEach((cell) => {
+                tr.appendChild(this.createTd(cell));
+            });
             const discountTd = document.createElement("td");
             discountTd.className = "p-2.5 text-[var(--text-light)] text-xs";
-            if (discount > 0) {
-                const badge = document.createElement("span");
-                badge.className = "bg-green-900 text-green-300 text-xs px-2 py-0.5 rounded whitespace-nowrap";
-                badge.textContent = discount + "% off";
-                discountTd.appendChild(badge);
-            }
-            else {
+            if (discount > 0)
+                discountTd.appendChild(this.createDiscountBadge(discount));
+            else
                 discountTd.textContent = "—";
-            }
             tr.appendChild(discountTd);
             const actionTd = document.createElement("td");
             actionTd.className = "p-2.5 whitespace-nowrap";
@@ -287,7 +303,9 @@ export class BookApp {
             cardTitle.className = "text-[var(--blue-light)] text-base font-bold mb-3 pb-2 border-b-2 border-[var(--blue-main)]";
             cardTitle.textContent = book.title;
             card.appendChild(cardTitle);
-            bookData.slice(1).forEach(([label, value]) => card.appendChild(this.createCardRow(label, value)));
+            bookData.slice(1).forEach(([label, value]) => {
+                card.appendChild(this.createCardRow(label, value));
+            });
             const discountRow = document.createElement("div");
             discountRow.className = "flex justify-between py-2 mb-3";
             const discountLabel = document.createElement("span");
@@ -295,72 +313,51 @@ export class BookApp {
             discountLabel.textContent = "Discount";
             const discountVal = document.createElement("span");
             discountVal.className = "text-[var(--text-light)] text-xs";
-            if (discount > 0) {
-                const badge = document.createElement("span");
-                badge.className = "bg-green-900 text-green-300 text-xs px-2 py-0.5 rounded whitespace-nowrap";
-                badge.textContent = discount + "% off";
-                discountVal.appendChild(badge);
-            }
-            else {
+            if (discount > 0)
+                discountVal.appendChild(this.createDiscountBadge(discount));
+            else
                 discountVal.textContent = "—";
-            }
             discountRow.appendChild(discountLabel);
             discountRow.appendChild(discountVal);
             card.appendChild(discountRow);
             const cardActions = document.createElement("div");
             cardActions.className = "flex gap-2";
-            const createCardBtn = (text, bg, onClick) => {
-                const btn = document.createElement("button");
-                btn.textContent = text;
-                btn.className = `flex-1 py-2 rounded text-white text-xs cursor-pointer border-none ${bg}`;
-                btn.addEventListener("click", onClick);
-                return btn;
-            };
-            cardActions.appendChild(createCardBtn("View", "bg-[var(--grey)]", () => this.showDetails(realIndex)));
-            cardActions.appendChild(createCardBtn("Edit", "bg-[var(--blue-dark)]", () => this.editBook(realIndex)));
-            cardActions.appendChild(createCardBtn("Delete", "bg-[var(--red-dark)]", () => this.deleteBook(realIndex)));
+            cardActions.appendChild(this.createCardBtn("View", "bg-[var(--grey)]", () => { this.showDetails(realIndex); }));
+            cardActions.appendChild(this.createCardBtn("Edit", "bg-[var(--blue-dark)]", () => { this.editBook(realIndex); }));
+            cardActions.appendChild(this.createCardBtn("Delete", "bg-[var(--red-dark)]", () => { this.deleteBook(realIndex); }));
             card.appendChild(cardActions);
             cardBox.appendChild(card);
         }
-    }
-    searchBooks() {
-        const searchTerm = document.getElementById("searchInput").value.trim().toLowerCase();
-        const searchStatus = document.getElementById("searchStatus");
+    };
+    searchBooks = () => {
+        const searchTerm = getElement("searchInput").value.trim().toLowerCase();
+        const searchStatus = getElement("searchStatus");
         if (searchTerm === "") {
             searchStatus.textContent = "Please type something to search.";
             return;
         }
         const results = this.library.search(searchTerm);
-        searchStatus.textContent = results.length === 0
-            ? `No books found for "${searchTerm}".`
-            : `Found ${results.length} book(s) for "${searchTerm}".`;
+        searchStatus.textContent = results.length === 0 ? `No books found for "${searchTerm}".` : `Found ${results.length} book(s) for "${searchTerm}".`;
         this.displayBooks();
-    }
-    clearSearch() {
+    };
+    clearSearch = () => {
         this.library.clearSearch();
-        document.getElementById("searchInput").value = "";
-        document.getElementById("searchStatus").textContent = "";
+        getElement("searchInput").value = "";
+        getElement("searchStatus").textContent = "";
         this.displayBooks();
+    };
+    showFetchError(fetchError, loadingMsg, message) {
+        loadingMsg.classList.add("hidden");
+        fetchError.textContent = message;
+        fetchError.classList.remove("hidden");
     }
-    simulateServer(data) {
-        return new Promise((resolve, reject) => {
-            setTimeout(() => {
-                if (data)
-                    resolve(data);
-                else
-                    reject("No data found");
-            }, 1500);
-        });
-    }
-    async fetchBookFromApi() {
-        const id = document.getElementById("fetchId").value;
-        const loadingMsg = document.getElementById("loadingMsg");
-        const fetchError = document.getElementById("fetchError");
-        const fetchResult = document.getElementById("fetchResult");
+    fetchBookFromApi = async () => {
+        const id = getElement("fetchId").value;
+        const loadingMsg = getElement("loadingMsg");
+        const fetchError = getElement("fetchError");
+        const fetchResult = getElement("fetchResult");
         if (id === "" || Number(id) < 1 || Number(id) > 100) {
-            fetchError.textContent = "Please enter a number between 1 and 100.";
-            fetchError.classList.remove("hidden");
-            fetchResult.classList.add("hidden");
+            this.showFetchError(fetchError, loadingMsg, "Please enter a number between 1 and 100.");
             return;
         }
         fetchError.classList.add("hidden");
@@ -370,42 +367,47 @@ export class BookApp {
             const response = await fetch("https://6a33db358248ee962fa48cc7.mockapi.io/books/books");
             if (!response.ok)
                 throw new Error(`Server error: ${response.status}`);
-            await this.simulateServer(response);
             const allBooks = await response.json();
             const data = allBooks[Number(id) - 1];
             if (!data)
                 throw new Error("Book not found");
             if (this.library.isbnExists(data.isbn)) {
-                loadingMsg.classList.add("hidden");
-                fetchError.textContent = "This book already exists in your list.";
-                fetchError.classList.remove("hidden");
+                this.showFetchError(fetchError, loadingMsg, "This book already exists in your list.");
                 return;
             }
             loadingMsg.classList.add("hidden");
             fetchResult.classList.remove("hidden");
-            document.getElementById("fetchTitle").textContent = data.title;
-            document.getElementById("fetchBody").textContent = `Author: ${data.author} | Genre: ${data.genre} | Published: ${data.publish_date}`;
-            this.fieldIds.forEach(field => {
+            const fetchedType = data.bookType ?? "EBook";
+            getElement("fetchTitle").textContent = data.title;
+            getElement("fetchBody").textContent = `Author: ${data.author} | Genre: ${data.genre} | Published: ${data.publish_date} | Type: ${fetchedType}`;
+            this.fieldIds.forEach((field) => {
                 const apiField = field === "publishDate" ? "publish_date" : field;
-                fetchResult.dataset[field] = data[apiField];
+                fetchResult.dataset[field] = data[apiField] ?? "";
             });
+            fetchResult.dataset["bookType"] = fetchedType;
+            fetchResult.dataset["fileSize"] = data.fileSize ?? "0";
+            fetchResult.dataset["pageCount"] = String(data.pageCount ?? 0);
         }
         catch (error) {
-            loadingMsg.classList.add("hidden");
-            fetchError.textContent = `Failed to fetch: ${error.message}`;
-            fetchError.classList.remove("hidden");
+            this.showFetchError(fetchError, loadingMsg, `Failed to fetch: ${error.message}`);
         }
-    }
-    addFetchedBook() {
-        const fetchResult = document.getElementById("fetchResult");
-        const values = this.fieldIds.map(field => fetchResult.dataset[field] ?? "");
-        const newBook = new EBook(values[0], values[1], values[2], values[3], values[4], "5");
+    };
+    addFetchedBook = () => {
+        const fetchResult = getElement("fetchResult");
+        const values = this.fieldIds.map((field) => fetchResult.dataset[field] ?? "");
+        const bookType = (fetchResult.dataset["bookType"] ?? "EBook");
+        const fileSize = fetchResult.dataset["fileSize"] ?? "0";
+        const pageCount = Number(fetchResult.dataset["pageCount"] ?? 0);
+        const safeGenre = toSafeGenre(values[4]);
+        const newBook = bookType === "Printed"
+            ? new PrintedBook(values[0], values[1], values[2], values[3], safeGenre, pageCount)
+            : new EBook(values[0], values[1], values[2], values[3], safeGenre, fileSize);
         this.library.addBook(newBook);
         fetchResult.classList.add("hidden");
-        document.getElementById("fetchId").value = "";
-        this.showSuccess("Fetched book added to your list!");
+        getElement("fetchId").value = "";
+        this.showSuccess(`${bookType} added to your list!`);
         this.displayBooks();
-    }
+    };
 }
 __decorate([
     Log,

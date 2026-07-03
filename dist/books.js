@@ -8,6 +8,7 @@ var __metadata = (this && this.__metadata) || function (k, v) {
     if (typeof Reflect === "object" && typeof Reflect.metadata === "function") return Reflect.metadata(k, v);
 };
 import { Log } from "./decorators.js";
+//general properties for both printed and ebook
 export class BaseBook {
     title;
     author;
@@ -47,11 +48,12 @@ export class BaseBook {
         const age = this.calculateAge();
         if (age > 100)
             return 30;
-        if (age > 50)
+        else if (age > 50)
             return 20;
-        if (age > 25)
+        else if (age > 25)
             return 10;
-        return 0;
+        else
+            return 0;
     }
     getSummary() {
         return `${this.title} by ${this.author} (${this.publishDate})`;
@@ -64,8 +66,8 @@ __decorate([
     __metadata("design:returntype", String)
 ], BaseBook.prototype, "getSummary", null);
 export class PrintedBook extends BaseBook {
-    type = "Printed";
     pageCount;
+    type = "Printed";
     constructor(title, author, isbn, publishDate, genre, pageCount) {
         super(title, author, isbn, publishDate, genre);
         this.pageCount = pageCount;
@@ -73,16 +75,22 @@ export class PrintedBook extends BaseBook {
     getReadingTime() {
         return Math.ceil(this.pageCount / 30) + " hrs";
     }
+    getExtraInfo() {
+        return `Reading Time: ${this.getReadingTime()}`;
+    }
 }
 export class EBook extends BaseBook {
-    type = "EBook";
     fileSize;
+    type = "EBook";
     constructor(title, author, isbn, publishDate, genre, fileSize) {
         super(title, author, isbn, publishDate, genre);
         this.fileSize = fileSize;
     }
     getFileInfo() {
         return `${this.fileSize} MB`;
+    }
+    getExtraInfo() {
+        return `File Size: ${this.getFileInfo()}`;
     }
 }
 //# sourceMappingURL=books.js.map
