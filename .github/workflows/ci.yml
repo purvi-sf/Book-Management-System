@@ -1,0 +1,28 @@
+name: BMS CI
+
+on:
+  push:
+    branches: ["**"]
+  pull_request:
+    branches: ["**"]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: "18"
+
+      - name: Install dependencies
+        run: npm install
+
+      - name: Run TypeScript compiler
+        run: npx tsc --noEmit
+
+      - name: Run ESLint
+        run: npx eslint "src/**/*.ts" --max-warnings=0

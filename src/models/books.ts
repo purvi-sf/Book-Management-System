@@ -1,5 +1,5 @@
-import { IBook, IPrintedBook, IEBook, BookType, Genre } from "./interfaces.js";
-import { Log } from "./decorators.js";
+import { IBook, IPrintedBook, IEBook, BookType, Genre } from "../types/interfaces.js";
+import { Log } from "../decorators/decorators.js";
 
 //general properties for both printed and ebook
 export abstract class BaseBook implements IBook {
