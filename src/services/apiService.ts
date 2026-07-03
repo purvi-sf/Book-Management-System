@@ -1,4 +1,4 @@
-import { IApiBook, IApiService, IFetchResult, BookType } from "../types/interfaces.js";
+import { IApiBook, IApiService, IFetchResult } from "../types/interfaces.js";
 
 // SRP — ApiService owns the ENTIRE fetch flow
 // Returns a clean IFetchResult so BookApp never touches raw API data
