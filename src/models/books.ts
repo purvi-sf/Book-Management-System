@@ -9,7 +9,7 @@ export abstract class BaseBook implements IBook {
   {}
 
   calculateAge(): number {
-    return 2026 - new Date(this.publishDate).getFullYear();
+    return new Date().getFullYear() - new Date(this.publishDate).getFullYear();
   }
 
   getEra(): string {

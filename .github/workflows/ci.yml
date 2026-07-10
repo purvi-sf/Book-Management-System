@@ -26,3 +26,6 @@ jobs:
 
       - name: Run ESLint
         run: npx eslint "src/**/*.ts" --max-warnings=0
+
+      - name: Run tests
+        run: npm test
