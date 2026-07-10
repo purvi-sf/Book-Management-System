@@ -3,6 +3,10 @@ import { getElement } from "../utils/generics.js";
 
 export class DOMBuilder implements IDOMBuilder {
 
+  private readonly fetchErrorEl = getElement<HTMLElement>("fetchError");
+  private readonly loadingMsgEl = getElement<HTMLElement>("loadingMsg");
+  private readonly fetchResultEl = getElement<HTMLElement>("fetchResult");
+  
   createRow(labelText: string, value: string): HTMLElement {
     const p = document.createElement("p");
     p.className = "text-[var(--text-light)] text-sm mb-2";
@@ -89,17 +93,16 @@ export class DOMBuilder implements IDOMBuilder {
   }
 
   showFetchError(message: string): void {
-    const fetchError = getElement<HTMLElement>("fetchError");
-    fetchError.textContent = message;
-    fetchError.classList.remove("hidden");
-    getElement<HTMLElement>("loadingMsg").classList.add("hidden");
-    getElement<HTMLElement>("fetchResult").classList.add("hidden");
+    this.fetchErrorEl.textContent = message;
+    this.fetchErrorEl.classList.remove("hidden");
+    this.loadingMsgEl.classList.add("hidden");
+    this.fetchResultEl.classList.add("hidden");
   }
 
   showFetchLoading(): void {
-    getElement<HTMLElement>("loadingMsg").classList.remove("hidden");
-    getElement<HTMLElement>("fetchError").classList.add("hidden");
-    getElement<HTMLElement>("fetchResult").classList.add("hidden");
+    this.loadingMsgEl.classList.remove("hidden");
+    this.fetchErrorEl.classList.add("hidden");
+    this.fetchResultEl.classList.add("hidden");
   }
 
   hideFetchLoading(): void {
@@ -119,7 +122,7 @@ export class DOMBuilder implements IDOMBuilder {
     msg.textContent = message;
     msg.classList.remove("hidden");
   }
-  
+
   renderBookList(books: IBook[], library: ILibrary, callbacks: IBookCallbacks): void {
     const tableBody = getElement<HTMLElement>("bookTableBody");
     const cardBox = getElement<HTMLElement>("bookCards");
@@ -138,11 +141,23 @@ export class DOMBuilder implements IDOMBuilder {
     tableBody.innerHTML = "";
     cardBox.innerHTML = "";
 
+    const indexMap = new Map<IBook, number>();
+    library.books.forEach((book,i)=>indexMap.set(book,i));
+
     books.forEach((book, i) => {
-      const realIndex = library.books.indexOf(book);
+      const realIndex = indexMap.get(book) ?? i;
       tableBody.appendChild(this.buildTableRow(book, i, realIndex, callbacks));
       cardBox.appendChild(this.buildCard(book, realIndex, callbacks));
     });
+  }
+
+  private createDiscountCell(discount: number): HTMLElement {
+    const el = document.createElement("span");
+    if (discount > 0)
+      el.appendChild(this.createDiscountBadge(discount));
+    else 
+      el.textContent = "—";
+    return el;
   }
 
   private buildTableRow(book: IBook, index: number, realIndex: number, callbacks: IBookCallbacks): HTMLElement {
@@ -157,11 +172,7 @@ export class DOMBuilder implements IDOMBuilder {
 
     const discountTd = document.createElement("td");
     discountTd.className = "p-2.5 text-[var(--text-light)] text-xs";
-    if (discount > 0) {
-      discountTd.appendChild(this.createDiscountBadge(discount));
-    } else {
-      discountTd.textContent = "—";
-    }
+    discountTd.appendChild(this.createDiscountCell(discount));
     tr.appendChild(discountTd);
 
     const actionTd = document.createElement("td");
@@ -201,11 +212,7 @@ export class DOMBuilder implements IDOMBuilder {
     discountLabel.textContent = "Discount";
     const discountVal = document.createElement("span");
     discountVal.className = "text-[var(--text-light)] text-xs";
-    if (discount > 0) {
-      discountVal.appendChild(this.createDiscountBadge(discount));
-    } else {
-      discountVal.textContent = "—";
-    }
+    discountVal.appendChild(this.createDiscountCell(discount));
     discountRow.appendChild(discountLabel);
     discountRow.appendChild(discountVal);
     card.appendChild(discountRow);

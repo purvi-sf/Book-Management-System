@@ -3,8 +3,13 @@ import { Log } from "../decorators/decorators.js";
 import { getElement } from "../utils/generics.js";
 
 export class BookApp {
-  private fieldIds: string[] = ["title", "author", "isbn", "publishDate", "genre"];
-  private errorIds: string[] = ["titleError", "authorError", "isbnError", "publishDateError", "genreError"];
+  private fields = [
+    { field: "title", error: "titleError" },
+    { field: "author", error: "authorError" },
+    { field: "isbn", error: "isbnError" },
+    { field: "publishDate", error: "publishDateError" },
+    { field: "genre", error: "genreError" },
+  ];
   private edit: number | null = null;
   private pendingFetch: IFetchResult | null = null;
 
@@ -53,8 +58,8 @@ export class BookApp {
     const extraWrap = getElement<HTMLElement>("extraWrap");
 
     const config: Record<string, { label: string; placeholder: string }> = {
-      Printed: { label: "Page Count:",     placeholder: "e.g. 350" },
-      EBook:   { label: "File Size (MB):", placeholder: "e.g. 5"   },
+      Printed: { label: "Page Count:", placeholder: "e.g. 350" },
+      EBook: { label: "File Size (MB):", placeholder: "e.g. 5" },
     };
 
     if (config[bookType]) {
@@ -68,7 +73,10 @@ export class BookApp {
   };
 
   private formCheck(): boolean {
-    const fieldsValid = this.formService.validate(this.fieldIds, this.errorIds);
+    const fieldsValid = this.formService.validate(
+      this.fields.map(f => f.field),
+      this.fields.map(f => f.error)
+    );
     const bookTypeValid = this.formService.validateBookType();
     if (!fieldsValid || !bookTypeValid) return false;
     const isbn = getElement<HTMLInputElement>("isbn").value.trim();
@@ -84,7 +92,10 @@ export class BookApp {
     const newBook = this.factory.createBook(this.formService.getValues());
     this.library.addBook(newBook);
     this.domBuilder.showSuccess("Book added successfully!");
-    this.formService.clearForm(this.fieldIds, ["bookType", "extraField"]);
+    this.formService.clearForm(
+      this.fields.map(f => f.field),
+      ["bookType", "extraField"]
+    );
     this.displayBooks();
   }
 
@@ -118,7 +129,10 @@ export class BookApp {
 
   cancelEdit = (): void => {
     this.edit = null;
-    this.formService.clearForm(this.fieldIds, ["bookType", "extraField"]);
+    this.formService.clearForm(
+      this.fields.map(f => f.field),
+      ["bookType", "extraField"]
+    );
     this.domBuilder.setFormMode("add");
   };
 
@@ -134,8 +148,8 @@ export class BookApp {
     const sortBy = getElement<HTMLSelectElement>("sortSelect").value as SortOption;
     const booksToShow = this.library.getSortedBooks(sortBy);
     const callbacks: IBookCallbacks = {
-      onView:   (i) => { this.showDetails(i); },
-      onEdit:   (i) => { this.editBook(i); },
+      onView: (i) => { this.showDetails(i); },
+      onEdit: (i) => { this.editBook(i); },
       onDelete: (i) => { this.deleteBook(i); },
     };
     this.domBuilder.renderBookList(booksToShow, this.library, callbacks);
@@ -172,7 +186,6 @@ export class BookApp {
       }
       this.domBuilder.hideFetchLoading();
       this.domBuilder.showFetchPreview(result);
-      // Store result on element for addFetchedBook to use
       this.pendingFetch = result;
     } catch (error) {
       this.domBuilder.showFetchError(`Failed to fetch: ${(error as Error).message}`);
@@ -180,8 +193,7 @@ export class BookApp {
   };
 
   addFetchedBook = (): void => {
-    if (!this.pendingFetch) 
-      return;
+    if (!this.pendingFetch) return;
     const result = this.pendingFetch;
     this.pendingFetch = null;
     this.library.addBook(this.factory.createFromFetch(result));

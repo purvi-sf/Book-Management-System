@@ -1,6 +1,7 @@
 export type BookType = "Printed" | "EBook";
 export type SortOption = "none" | "title" | "author" | "age_asc" | "age_desc";
-export type Genre = "Fiction" | "Non-Fiction" | "Fantasy" | "Science Fiction" | "Mystery" | "Thriller" | "Romance" | "Horror" | "History" | "Science" | "Biography" | "Other";
+export const GENRES = ["Fiction", "Non-Fiction", "Fantasy", "Science Fiction", "Mystery", "Thriller", "Romance", "Horror", "History", "Science", "Biography", "Other"] as const;
+export type Genre = typeof GENRES[number];
 
 export interface IBookCore {
   title: string;
