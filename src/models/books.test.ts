@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { PrintedBook, EBook } from "./books.js";
+import { PrintedBook } from "./books.js";
 
 describe("Book age Calculations", () => {
     it("calculates age correctly based on the publish date", () => {
