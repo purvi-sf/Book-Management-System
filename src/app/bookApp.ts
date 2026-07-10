@@ -1,14 +1,12 @@
-import { ILibrary, IBookFactory, IApiService, IFormService, IDOMBuilder, IBookCallbacks, SortOption } from "../types/interfaces.js";
+import { ILibrary, IBookFactory, IApiService, IFormService, IDOMBuilder, IBookCallbacks, SortOption, IFetchResult } from "../types/interfaces.js";
 import { Log } from "../decorators/decorators.js";
 import { getElement } from "../utils/generics.js";
 
-// SRP — BookApp ONLY coordinates between services
-// Every method is 2-5 lines — it just delegates to the right service
-// DIP — depends entirely on interfaces, not concrete classes
 export class BookApp {
   private fieldIds: string[] = ["title", "author", "isbn", "publishDate", "genre"];
   private errorIds: string[] = ["titleError", "authorError", "isbnError", "publishDateError", "genreError"];
   private edit: number | null = null;
+  private pendingFetch: IFetchResult | null = null;
 
   constructor(
     private library: ILibrary,
@@ -19,8 +17,6 @@ export class BookApp {
   ) {
     this.attachEvents();
   }
-
-  // ─── Events ──────────────────────────────────────────────────────────────
 
   private attachEvents(): void {
     getElement<HTMLInputElement>("isbn").addEventListener("input", (e) => {
@@ -49,8 +45,6 @@ export class BookApp {
       getElement<HTMLElement>(id).addEventListener("change", handler);
     });
   }
-
-  // ─── Form UI ─────────────────────────────────────────────────────────────
 
   toggleExtraField = (): void => {
     const bookType = getElement<HTMLSelectElement>("bookType").value;
@@ -84,8 +78,6 @@ export class BookApp {
     }
     return true;
   }
-
-  // ─── CRUD — each method is 2-4 lines ─────────────────────────────────────
 
   @Log
   private addBook(): void {
@@ -130,8 +122,6 @@ export class BookApp {
     this.domBuilder.setFormMode("add");
   };
 
-  // ─── Display ─────────────────────────────────────────────────────────────
-
   showDetails(realIndex: number): void {
     this.domBuilder.renderDetail(this.library.books[realIndex]);
   }
@@ -151,8 +141,6 @@ export class BookApp {
     this.domBuilder.renderBookList(booksToShow, this.library, callbacks);
   };
 
-  // ─── Search ──────────────────────────────────────────────────────────────
-
   searchBooks = (): void => {
     const term = getElement<HTMLInputElement>("searchInput").value.trim().toLowerCase();
     const status = getElement<HTMLElement>("searchStatus");
@@ -168,8 +156,6 @@ export class BookApp {
     getElement<HTMLElement>("searchStatus").textContent = "";
     this.displayBooks();
   };
-
-  // ─── API Fetch ───────────────────────────────────────────────────────────
 
   fetchBookFromApi = async (): Promise<void> => {
     const id = getElement<HTMLInputElement>("fetchId").value;
@@ -187,15 +173,17 @@ export class BookApp {
       this.domBuilder.hideFetchLoading();
       this.domBuilder.showFetchPreview(result);
       // Store result on element for addFetchedBook to use
-      getElement<HTMLElement>("fetchResult").dataset["json"] = JSON.stringify(result);
+      this.pendingFetch = result;
     } catch (error) {
       this.domBuilder.showFetchError(`Failed to fetch: ${(error as Error).message}`);
     }
   };
 
   addFetchedBook = (): void => {
-    const json = getElement<HTMLElement>("fetchResult").dataset["json"] ?? "{}";
-    const result = JSON.parse(json);
+    if (!this.pendingFetch) 
+      return;
+    const result = this.pendingFetch;
+    this.pendingFetch = null;
     this.library.addBook(this.factory.createFromFetch(result));
     getElement<HTMLElement>("fetchResult").classList.add("hidden");
     getElement<HTMLInputElement>("fetchId").value = "";

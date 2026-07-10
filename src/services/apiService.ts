@@ -1,6 +1,5 @@
 import { IApiBook, IApiService, IFetchResult } from "../types/interfaces.js";
 
-// SRP — ApiService owns the ENTIRE fetch flow
 // Returns a clean IFetchResult so BookApp never touches raw API data
 export class ApiService implements IApiService {
   constructor(private url: string) {}
@@ -16,7 +15,6 @@ export class ApiService implements IApiService {
     if (!data) throw new Error("Book not found");
 
     // Map API shape to our clean IFetchResult shape
-    // publish_date → publishDate handled here, not in BookApp
     return {
       title: data.title,
       author: data.author,

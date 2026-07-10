@@ -2,8 +2,6 @@ import { IFormValues, IFormService, IBook, BookType, Genre } from "../types/inte
 import { PrintedBook, EBook } from "../models/books.js";
 import { getElement } from "../utils/generics.js";
 
-// SRP — FormService owns ALL form interactions
-// Reading, writing, validating — all in one place
 export class FormService implements IFormService {
   private getValue(id: string): string {
     return getElement<HTMLInputElement>(id).value.trim();
@@ -22,7 +20,6 @@ export class FormService implements IFormService {
   }
 
   // Fills the form with an existing book's data — used in editBook
-  // BookApp just calls fillForm(book) — doesn't touch DOM at all
   fillForm(book: IBook): void {
     const fields: Record<string, string> = {
       title: book.title,
@@ -45,7 +42,7 @@ export class FormService implements IFormService {
     }
   }
 
-  // Clears all form fields — BookApp just calls clearForm()
+  // Clears all form fields 
   clearForm(fieldIds: string[], extraIds: string[]): void {
     [...fieldIds, ...extraIds].forEach((id) => {
       getElement<HTMLInputElement>(id).value = "";

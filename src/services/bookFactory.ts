@@ -2,8 +2,6 @@ import { IBook, IBookFactory, IFormValues, IFetchResult } from "../types/interfa
 import { PrintedBook, EBook } from "../models/books.js";
 import { toSafeGenre } from "../utils/generics.js";
 
-// SRP — BookFactory only creates book objects
-// OCP — to add AudioBook, add class and one line here. Nothing else changes.
 export class BookFactory implements IBookFactory {
   createBook(values: IFormValues): IBook {
     const { title, author, isbn, publishDate, genre, bookType, extra } = values;

@@ -1,12 +1,7 @@
 import { IDOMBuilder, IBook, ILibrary, IBookCallbacks, IFetchResult } from "../types/interfaces.js";
 import { getElement } from "../utils/generics.js";
 
-// SRP — DOMBuilder owns ALL DOM building and UI state changes
-// Nothing outside this class touches DOM directly except BookApp's 
-// attachEvents and form field interactions (which belong to FormService)
 export class DOMBuilder implements IDOMBuilder {
-
-  // ─── Shared Helpers ──────────────────────────────────────────────────────
 
   createRow(labelText: string, value: string): HTMLElement {
     const p = document.createElement("p");
@@ -63,9 +58,6 @@ export class DOMBuilder implements IDOMBuilder {
     return badge;
   }
 
-  // ─── Detail Modal ─────────────────────────────────────────────────────────
-
-  // BookApp calls renderDetail(book) — one line. DOMBuilder does everything.
   renderDetail(book: IBook): void {
     getElement<HTMLElement>("detailTitle").textContent = book.title;
     const detailBody = getElement<HTMLElement>("detailBody");
@@ -90,9 +82,6 @@ export class DOMBuilder implements IDOMBuilder {
     getElement<HTMLElement>("detailModal").classList.remove("hidden");
   }
 
-  // ─── Fetch UI ─────────────────────────────────────────────────────────────
-
-  // BookApp calls showFetchPreview(result) — one line. DOMBuilder does everything.
   showFetchPreview(result: IFetchResult): void {
     getElement<HTMLElement>("fetchTitle").textContent = result.title;
     getElement<HTMLElement>("fetchBody").textContent = `Author: ${result.author} | Genre: ${result.genre} | Published: ${result.publishDate} | Type: ${result.bookType}`;
@@ -117,9 +106,6 @@ export class DOMBuilder implements IDOMBuilder {
     getElement<HTMLElement>("loadingMsg").classList.add("hidden");
   }
 
-  // ─── Form UI State ────────────────────────────────────────────────────────
-
-  // Switches form between add mode and edit mode
   setFormMode(mode: "add" | "edit"): void {
     const isEdit = mode === "edit";
     getElement<HTMLElement>("formHeading").textContent = isEdit ? "Edit Book"      : "Add a New Book";
@@ -133,9 +119,7 @@ export class DOMBuilder implements IDOMBuilder {
     msg.textContent = message;
     msg.classList.remove("hidden");
   }
-
-  // ─── Book List ────────────────────────────────────────────────────────────
-
+  
   renderBookList(books: IBook[], library: ILibrary, callbacks: IBookCallbacks): void {
     const tableBody = getElement<HTMLElement>("bookTableBody");
     const cardBox = getElement<HTMLElement>("bookCards");
