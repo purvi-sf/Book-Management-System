@@ -1,5 +1,5 @@
-import { IBook, IPrintedBook, IEBook, BookType, Genre } from "./interfaces.js";
-import { Log } from "./decorators.js";
+import { IBook, IPrintedBook, IEBook, BookType, Genre } from "../types/interfaces.js";
+import { Log } from "../decorators/decorators.js";
 
 //general properties for both printed and ebook
 export abstract class BaseBook implements IBook {
@@ -9,7 +9,7 @@ export abstract class BaseBook implements IBook {
   {}
 
   calculateAge(): number {
-    return 2026 - new Date(this.publishDate).getFullYear();
+    return new Date().getFullYear() - new Date(this.publishDate).getFullYear();
   }
 
   getEra(): string {

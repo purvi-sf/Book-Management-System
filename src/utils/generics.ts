@@ -1,6 +1,6 @@
 //point of generics is to create functions that work with any type
 
-import { IBook, SortOption, Genre } from "./interfaces.js";
+import { IBook, SortOption, Genre, GENRES } from "../types/interfaces.js";
 
 //T is just an arbitrary parameter like it could by anything 
 export function filterItems<T>(array: T[], predicate: (item: T) => boolean): T[] {
@@ -29,8 +29,6 @@ export function getElement<T extends HTMLElement>(id: string): T {
   return el;
 }
  
-const VALID_GENRES: Genre[] = ["Fiction", "Non-Fiction", "Fantasy", "Science Fiction", "Mystery", "Thriller", "Romance", "Horror", "History", "Science", "Biography", "Other"];
- 
 export function toSafeGenre(value: string): Genre {
-  return VALID_GENRES.includes(value as Genre) ? value as Genre : "Other";
+  return (GENRES as readonly string[]).includes(value) ? value as Genre : "Other";
 }

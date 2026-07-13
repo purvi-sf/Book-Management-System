@@ -15,3 +15,11 @@
   --grey-dark: #263238;
   --border:    #1A3A5C;
 }
+
+#bookTable th {
+  background: var(--blue-main);
+  color:      white;
+  padding:    12px;
+  text-align: left;
+  font-size:  12px;
+}

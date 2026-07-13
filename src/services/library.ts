@@ -1,6 +1,6 @@
-import { IBook, ILibrary, SortOption } from "./interfaces.js";
-import { getSortedBooks, filterItems } from "./generics.js";
-import { Log, ValidateBook } from "./decorators.js";
+import { IBook, ILibrary, SortOption } from "../types/interfaces.js";
+import { getSortedBooks, filterItems } from "../utils/generics.js";
+import { Log, ValidateBook } from "../decorators/decorators.js";
 
 export class Library implements ILibrary {
   books: IBook[] = [];
@@ -46,22 +46,5 @@ export class Library implements ILibrary {
   getSortedBooks(sortBy: SortOption): IBook[] {
     const list = this.filteredBooks !== null ? this.filteredBooks : this.books;
     return getSortedBooks(list, sortBy);
-  }
-
-  //called by class name only since static
-  static validateForm(fieldIds: string[], errorIds: string[]): boolean {
-    let isValid = true;
-    for (let i = 0; i < fieldIds.length; i++) {
-      const input = document.getElementById(fieldIds[i]) as HTMLInputElement;
-      const error = document.getElementById(errorIds[i]) as HTMLElement;
-      error.classList.add("hidden");
-      input.classList.remove("invalid");
-      if (input.value.trim() === "") {
-        error.classList.remove("hidden");
-        input.classList.add("invalid");
-        isValid = false;
-      }
-    }
-    return isValid;
   }
 }
